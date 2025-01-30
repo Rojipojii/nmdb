@@ -1,0 +1,108 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/navbar.css') }}">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/listmusic.css') }}">
+    <!-- <script src="{{ url_for('static', filename='js/listmusic.js') }}"></script> -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+    <link href="https://stackpath.bootstrapcdn.com/bootstrap/5.1.3/css/bootstrap.min.css" rel="stylesheet">
+    <title>List Artists</title>
+    <style>
+        .alphabet-links a {
+            margin: 2px;
+        }
+    </style>
+</head>
+<body>
+    <div id="header-placeholder"></div>
+
+    <script>
+        // JavaScript to include header
+        fetch('/header')
+            .then(response => response.text())
+            .then(data => {
+                document.getElementById('header-placeholder').innerHTML = data;
+            })
+            .catch(error => console.error('Error fetching header:', error));
+    </script>
+
+    <div class="container">
+        <div class="alphabet-links">
+            <a href="{{ url_for('listartists', letter='0-9', search=request.args.get('search', '')) }}" class="btn btn-link">0-9</a>
+            <div class="btn-group">
+                {% for letter in 'ABCDEFGHIJKLMNOPQRSTUVWXYZ' %}
+                    <a href="{{ url_for('listartists', letter=letter, search=request.args.get('search', '')) }}" class="btn btn-link">{{ letter }}</a>
+                {% endfor %}
+            </div>
+
+    <!-- List of musicians -->
+    <div class="table-container">
+        <table id="dataTable">
+            <thead>
+                <tr>
+                    <th class="sortable" onclick="sortTable(0)">Name</th>
+                    <th>Actions</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for musician in musicians %}
+                <tr>
+                    <td>
+                        {% if musician.type == 'artist' %}
+                            {% if musician.gender == 'male' %}
+                            <i class="fas fa-user" style="color: blue;"></i>
+                            {% elif musician.gender == 'female' %}
+                            <i class="fas fa-user" style="color: pink"></i>
+                            {% else %}
+                                <i class="fas fa-user"></i>
+                            {% endif %}
+                        {% else %}
+                            <i class="fas fa-users"></i>
+                        {% endif %}
+                        {{ musician.name }}
+                        {% if musician.remarks %}
+                            <span>({{ musician.remarks }})</span>
+                        {% endif %}
+                    </td>
+                    <td>
+                        <!-- Check if all required fields are present -->
+                        {% if musician.birth_date and musician.death_date %}
+                            <a href="{{ url_for('artistprofile', id=musician['id'], artist_name=musician['encoded_name'].replace(' ', '-')) }}">
+                                View Profile
+                            </a> 
+                            <!-- <a href="{{ url_for('edit_profile', profile_id=musician.id) }}" class="edit">Edit Profile</a> -->
+                        {% else %}
+                        <!-- <a href="{{ url_for('edit_profile', profile_id=musician.id) }}" class="edit">Edit Profile</a> -->
+                        {% endif %}
+                        |
+                        <a href="{{ url_for('edit_musician', id=musician.id) }}" class="edit">Edit Artist</a>
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+
+    <div class="pagination">
+        <button onclick="changePage(1)" {% if page == 1 %}disabled{% endif %}><i class="fas fa-angle-double-left"></i></button>
+        <button onclick="changePage({{ page - 1 }})" {% if page == 1 %}disabled{% endif %}><i class="fas fa-chevron-left"></i></button>
+        <span>Page {{ page }} of {{ total_pages }}</span>
+        <button onclick="changePage({{ page + 1 }})" {% if page == total_pages %}disabled{% endif %}><i class="fas fa-chevron-right"></i></button>
+        <button onclick="changePage({{ total_pages }})" {% if page == total_pages %}disabled{% endif %}><i class="fas fa-angle-double-right"></i></button>
+    </div>
+
+    <script>
+        function changePage(page) {
+            if (page < 1) page = 1;
+            if (page > {{ total_pages }}) page = {{ total_pages }};
+            window.location.href = `?page=${page}`;
+        }
+
+        function goToPage() {
+            const page = document.getElementById('pageInput').value;
+            changePage(page);
+        }
+    </script>
+</body>
+</html>

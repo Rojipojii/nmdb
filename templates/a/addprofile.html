@@ -1,0 +1,313 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/navbar.css') }}">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/addmusic.css') }}">
+    <link rel="stylesheet" href="https://code.jquery.com/ui/1.12.1/themes/base/jquery-ui.css">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/select2/4.1.0-beta.1/css/select2.min.css" rel="stylesheet" />
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <script src="https://code.jquery.com/ui/1.12.1/jquery-ui.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/select2/4.1.0-beta.1/js/select2.min.js"></script>
+    <title>Add Profile</title>
+    <script>
+        $(document).ready(function() {
+            $('#genreSelect').select2({
+                placeholder: "Select Genre",
+                allowClear: true
+            });
+
+            $('#musician-select').select2({
+                placeholder: "Select a musician",
+                allowClear: true
+            });
+
+            $('#musician-select').on('change', function() {
+                const selectedMusicianType = $(this).find('option:selected').data('type');
+                $('#musician-type').val(selectedMusicianType);
+
+                if (selectedMusicianType === 'band') {
+                    $('#band-formation-info').show();
+                    $('#band-members-field').show(); // Show Band Members field
+                    $('#artist-birth-info').hide();
+                } else {
+                    $('#band-formation-info').hide();
+                    $('#band-members-field').hide(); // Hide Band Members field
+                    $('#artist-birth-info').show();
+                }
+            });
+
+            // Ensure band members fields are not required
+            $('#band-members-field input').prop('required', false);
+
+            // Initialize year-only datepicker
+            $("#band-formed-date, #band-disbanded-date, #artist-birthdate, #artist-deathdate").datepicker({
+                changeYear: true,
+                showButtonPanel: true,
+                dateFormat: 'yy',
+                onChangeMonthYear: function(year, month, inst) {
+                    $(this).val(year);
+                }
+            });
+
+            // Custom validation
+            $('form').on('submit', function(event) {
+                var isValid = true;
+                $('input[required], select[required]').each(function() {
+                    if (!$(this).val()) {
+                        isValid = false;
+                        $(this).addClass('is-invalid');
+                        $(this).next('.invalid-feedback').remove();
+                        $(this).after('<div class="invalid-feedback">This field is required.</div>');
+                    } else {
+                        $(this).removeClass('is-invalid');
+                        $(this).next('.invalid-feedback').remove();
+                    }
+                });
+
+                if (!isValid) {
+                    event.preventDefault();
+                }
+            });
+        });
+
+        function addEntry(type) {
+            const container = document.getElementById(type + 'Container');
+            const entryDiv = document.createElement('div');
+            entryDiv.classList.add('entry');
+            const input = document.createElement('input');
+            input.type = 'text';
+            input.name = type + '[]';
+            input.placeholder = type === 'discography' ? 'Album/Song Title' : 'Award Title';
+            entryDiv.appendChild(input);
+            container.appendChild(entryDiv);
+        }
+
+        let bandMemberIndex = 1;
+
+        function addBandMember() {
+            const container = document.getElementById('band-members-container');
+            const newEntry = document.createElement('div');
+            newEntry.className = 'row band-member-entry align-items-center';
+    
+            newEntry.innerHTML = `
+                <div class="col-md-4 mb-2">
+                    <label for="musician_id_${bandMemberIndex}" class="form-label">Artist Name</label>
+                    <select name="band_members[][musician_id]" id="musician_id_${bandMemberIndex}" class="form-control">
+                        <option value="" disabled selected>Select an artist</option>
+                        {% for musician in musicians %}
+                            {% if musician.type == 'artist' %}
+                                <option value="{{ musician.id }}">{{ musician.name }}</option>
+                            {% endif %}
+                        {% endfor %}
+                    </select>
+                </div>
+    
+                <div class="col-md-4 mb-2">
+                    <label for="position_${bandMemberIndex}" class="form-label">Designation</label>
+                    <input type="text" name="band_members[][position]" id="position_${bandMemberIndex}" class="form-control">
+                </div>
+    
+                <div class="col-md-4 mb-2 d-flex align-items-center">
+                    <label for="active_${bandMemberIndex}" class="form-label me-2">Active Member</label>
+                    <div class="form-check me-2">
+                        <input type="checkbox" name="band_members[][active]" id="active_${bandMemberIndex}" class="form-check-input">
+                        <label for="active_${bandMemberIndex}" class="form-check-label">Yes</label>
+                    </div>
+                    <button type="button" class="btn btn-danger btn-sm" onclick="removeBandMember(this)">-</button>
+                </div>
+            `;
+    
+            container.appendChild(newEntry);
+            bandMemberIndex++;
+        }
+    
+        function removeBandMember(button) {
+            const container = document.getElementById('band-members-container');
+            container.removeChild(button.closest('.band-member-entry'));
+        }
+
+    </script>    
+</head>
+<body>
+    <div id="header-placeholder"></div>
+    <script>
+        fetch('/header')
+            .then(response => response.text())
+            .then(data => {
+                document.getElementById('header-placeholder').innerHTML = data;
+            })
+            .catch(error => console.error('Error fetching header:', error));
+    </script>
+
+    <br><br><br><br>
+    <form action="{{ url_for('addprofile', id=musician.id) }}" method="post" enctype="multipart/form-data" class="container mt-5">
+
+        <h3>{{musician.name}}</h3>
+
+<!-- For Bands -->
+<div class="row" id="band-formation-info" style="display: none;">
+    <div class="col-md-6 mb-3">
+        <label for="band-formed-date" class="form-label">Formed date</label>
+        <input type="date" id="band-formed-date" name="birth_date" class="form-control">
+    </div>
+    <div class="col-md-6 mb-3">
+        <label for="band-formed-place" class="form-label">Formed place</label>
+        <input type="text" id="band-formed-place" name="birthplace" class="form-control">
+    </div>
+    <div class="col-md-6 mb-3">
+        <label for="band-disbanded-date" class="form-label">Disbanded date</label>
+        <input type="date" id="band-disbanded-date" name="death_date" class="form-control">
+    </div>
+</div>
+
+<!-- For Artists -->
+<div class="row" id="artist-birth-info" style="display: none;">
+    <div class="col-md-6 mb-3">
+        <label for="artist-birthdate" class="form-label">Birthdate</label>
+        <input type="date" id="artist-birthdate" name="birth_date" class="form-control">
+    </div>
+    <div class="col-md-6 mb-3">
+        <label for="artist-birthplace" class="form-label">Birthplace</label>
+        <input type="text" id="artist-birthplace" name="birthplace" class="form-control">
+    </div>
+    <div class="col-md-6 mb-3">
+        <label for="artist-deathdate" class="form-label">Deathdate</label>
+        <input type="date" id="artist-deathdate" name="death_date" class="form-control">
+    </div>
+    <div class="col-md-6 mb-3">
+        <label for="artist-deathplace" class="form-label">Deathplace</label>
+        <input type="text" id="artist-deathplace" name="deathplace" class="form-control">
+    </div>
+</div>
+        <!-- Bio -->
+        <div class="mb-3">
+            <label for="bio" class="form-label">Bio</label>
+            <textarea id="bio" name="bio" class="form-control" rows="4" placeholder="Write something..."></textarea>
+        </div>
+
+        <!-- Cover Image -->
+        <div class="mb-3">
+            <label for="imageUpload" class="form-label">Cover image</label>
+            <input type="file" id="cover_image" name="cover_image" class="form-control" accept="image/*">
+        </div>
+
+        <!-- Genre Selection -->
+        <div class="mb-3">
+            <label for="genreSelect" class="form-label">Genre</label>
+            <select id="genreSelect" name="genre" class="form-select" multiple="multiple">
+                <option value="Rock">Rock</option>
+                <option value="Pop">Pop</option>
+                <option value="Jazz">Jazz</option>
+                <option value="Classical">Classical</option>
+                <option value="Hip-Hop">Hip-Hop</option>
+            </select>
+        </div>
+<!-- Band Members Field -->
+<div id="band-members-field" class="mb-3" style="display: none;">
+    <label for="band-members" class="form-label">Band Members</label>
+    <div id="band-members-container" required>
+        <!-- Initial Band Member Form -->
+        <div class="row band-member-entry align-items-center">
+            <!-- Artist Name -->
+            <div class="col-md-4 mb-2">
+                <label for="musician_id_0" class="form-label">Artist Name</label>
+                <select name="band_members[][musician_id]" id="musician_id_0" class="form-control">
+                    <option value="" disabled selected>Select an artist</option>
+                    {% for musician in musicians %}
+                        {% if musician.type == 'artist' %}
+                            <option value="{{ musician.id }}">{{ musician.name }}</option>
+                        {% endif %}
+                    {% endfor %}
+                </select>
+            </div>
+
+            <!-- Position -->
+            <div class="col-md-4 mb-2">
+                <label for="position_0" class="form-label">Designation</label>
+                <input type="text" name="band_members[][position]" id="position_0" class="form-control">
+            </div>
+
+            <!-- Active Member Checkbox -->
+            <div class="col-md-4 mb-2 d-flex align-items-center">
+                <label for="active_0" class="form-label me-2">Active Member</label>
+                <div class="form-check me-2">
+                    <input type="checkbox" name="band_members[][active]" id="active_0" class="form-check-input">
+                    <label for="active_0" class="form-check-label">Yes</label>
+                </div>
+                <!-- Add Band Member Button -->
+                <button type="button" class="btn btn-secondary btn-sm" onclick="addBandMember()">+</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+        <!-- Discography -->
+        <div id="discographyContainer" class="mb-3">
+            <label for="discography" class="form-label">Discography</label>
+            <input type="text" name="discography[]" class="form-control mb-2" placeholder="Album/Song Title">
+        </div>
+        <button type="button" class="btn btn-secondary" onclick="addEntry('discography')">Add Discography</button>
+
+        <!-- Awards -->
+        <div id="awardsContainer" class="mb-3">
+            <label for="awards" class="form-label">Awards</label>
+            <input type="text" name="awards[]" class="form-control mb-2" placeholder="Award Title">
+        </div>
+        <button type="button" class="btn btn-secondary" onclick="addEntry('awards')">Add Award</button>
+
+        
+    <!-- Social Media -->
+    <div class="mb-3">
+        <label for="social-media" class="form-label">Social Media</label>
+        <div class="row g-3">
+            <div class="col-md-6">
+                <input type="text" id="website" name="website" class="form-control" placeholder="Website URL">
+            </div>
+            <div class="col-md-6">
+                <input type="text" id="facebook" name="facebook" class="form-control" placeholder="Facebook URL">
+            </div>
+            <div class="col-md-6">
+                <input type="text" id="twitter" name="twitter" class="form-control" placeholder="Twitter URL">
+            </div>
+            <div class="col-md-6">
+                <input type="text" id="instagram" name="instagram" class="form-control" placeholder="Instagram URL">
+            </div>
+            <div class="col-md-6">
+                <input type="text" id="youtube" name="youtube" class="form-control" placeholder="YouTube URL">
+            </div>
+            <div class="col-md-6">
+                <input type="text" id="spotify" name="spotify" class="form-control" placeholder="Spotify URL">
+            </div>
+            <div class="col-md-6">
+                <input type="text" id="apple-music" name="apple_music" class="form-control" placeholder="Apple Music URL">
+            </div>
+            <div class="col-md-6">
+                <input type="text" id="soundcloud" name="soundcloud" class="form-control" placeholder="SoundCloud URL">
+            </div>
+            <div class="col-md-6">
+            <input type="text" id="tiktok" name="tiktok" class="form-control" placeholder="Tiktok URL">
+        </div>
+        <div class="mb-3">
+            <input type="text" id="noodle" name="noodle" class="form-control" placeholder = "Noodle URL">
+        </div>
+        </div>
+    </div>
+
+    <!-- Noodle -->
+
+
+    <!-- Player Embed -->
+    <div class="mb-3">
+        <label for="player_embed" class="form-label">Player Embed</label>
+        <textarea id="player_embed" name="player_embed" class="form-control"></textarea>
+    </div>
+
+        <!-- Submit Button -->
+        <div class="d-flex justify-content-center">
+            <button type="submit" class="btn btn-primary">Submit</button>
+        </div>
+    </form>
+</body>
+</html>

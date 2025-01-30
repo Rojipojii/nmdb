@@ -1,0 +1,38 @@
+# Python
+__pycache__/
+*.py[cod]
+*.pyo
+*.pyd
+.Python
+env/
+venv/
+.env
+.venv
+
+
+# Ignore backups directory
+backups/
+
+# Ignore static directory
+static/
+
+virt/
+
+# IDEs
+.idea/
+.vscode/
+
+# Operating System files
+Thumbs.db
+.DS_Store
+
+# Backup files
+*.bak
+*.swp
+
+# Node.js dependencies
+node_modules/
+
+# Other
+*.log
+*.sqlite

@@ -1,0 +1,41 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/navbar.css') }}">
+    <title>Dashboard</title>
+</head>
+<body>
+    <div class="header-container">
+        <h2>NMDB</h2>
+        <div class="topnav">
+            <a href="{{ url_for('dashboard') }}" class="custom-bar-item {{ 'active' if request.endpoint == 'dashboard' else '' }}" >Dashboard</a>
+            <a href="{{ url_for('test') }}" class="custom-bar-item {{ 'active' if request.endpoint == 'test' else '' }}">Test</a>
+            <a href="{{ url_for('roles') }}" class="custom-bar-item {{ 'active' if request.endpoint == 'roles' else '' }}">Role</a>
+            <a href="{{ url_for('genres') }}" class="custom-bar-item {{ 'active' if request.endpoint == 'genres' else '' }}">Genre</a>
+            <a href="{{ url_for('languages') }}" class="custom-bar-item {{ 'active' if request.endpoint == 'languages' else '' }}">Languages</a>
+            <a href="{{ url_for('listartists') }}" class="custom-bar-item {{ 'active' if request.endpoint == 'listartists' else '' }}">List Artists</a>
+            <a href="{{ url_for('addartists') }}" class="custom-bar-item {{ 'active' if request.endpoint == 'addartists' else '' }}">Add Artists</a>
+            <a href="{{ url_for('collection') }}" class="custom-bar-item {{ 'active' if request.endpoint == 'collection' else '' }}">Collection</a>
+            <!-- <a href="#" class="custom-bar-item">Add Awards</a> -->
+            <a href="{{ url_for('logout') }}" class="custom-bar-item {{ 'active' if request.endpoint == 'logout' else '' }}">Logout</a>
+            <a href="https://nmdb.nepalmusicarchive.org/svcrestart" class="custom-bar-item">Restart Server</a>
+        </div>
+        <!-- Search Bar -->
+        <div class="search-container">
+            <form method="GET" action="{{ url_for('listartists') }}">
+                <input type="text" name="search" placeholder="Search musicians..." value="{{ request.args.get('search', '') }}">
+                <button type="submit">Search</button>
+            </form>
+        </div>
+    </div>
+
+    <!-- Page content -->
+    <div class="content">
+        <!-- Add horizontal rule with custom spacing -->
+        <hr class="custom-hr">
+        <!-- Your page content here -->
+        <hr class="custom-hr">
+    </div>
+</body>
+</html>

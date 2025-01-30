@@ -1,0 +1,133 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/navbar.css') }}">
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/musicians.css') }}">
+  <title>Edit Artists</title>
+</head>
+
+<body>
+  <div id="header-placeholder"></div>
+  <script>
+    // JavaScript to include header
+    document.addEventListener('DOMContentLoaded', () => {
+      fetch('/header')
+        .then(response => response.text())
+        .then(data => {
+          document.getElementById('header-placeholder').innerHTML = data;
+        })
+        .catch(error => console.error('Error fetching header:', error));
+    });
+  </script>
+
+  <br>
+  <br>
+  <!-- Edit Musician Form -->
+  <div class="form-container">
+    <form class="edit-musician-form" method="POST" action="{{ url_for('edit_musician', id=musician.id) }}">
+
+
+      <div>
+        <p>Type:</p>
+        <label class="radio-label">
+          <input type="radio" name="type" value="artist" id="artist-radio" {% if musician.type == 'artist' %}checked{% endif %}> Artist
+        </label>
+        <label class="radio-label">
+          <input type="radio" name="type" value="band" id="band-radio" {% if musician.type == 'band' %}checked{% endif %}> Band
+        </label>
+        <label class="radio-label">
+          <input type="radio" name="type" value="non-professional" id="non-professional-radio" {% if musician.type == 'non-professional' %}checked{% endif %}> Non-Professional
+        </label>
+      </div><br>
+
+      <div class="form-group">
+        <label for="name_en">Name in English:</label>
+        <input type="text" id="name_en" name="name_en" value="{{ musician.name_en }}" required>
+      </div><br>
+
+      <div class="form-group">
+        <label for="name_np">Name in Nepali:</label>
+        <input type="text" id="name_np" name="name_np" value="{{ musician.name_np }}" required>
+      </div><br>
+
+      <div id="gender-field" style="display: none;">
+        <p>Gender :</p>
+        <label>
+          <input type="radio" name="gender" value="male" id="male-radio" {% if musician.gender == 'male' %}checked{% endif %}>
+          Male
+        </label>
+        <label>
+          <input type="radio" name="gender" value="female" id="female-radio" {% if musician.gender == 'female' %}checked{% endif %}>
+          Female
+        </label>
+        <label>
+          <input type="radio" name="gender" value="other" id="other-radio" {% if musician.gender == 'other' %}checked{% endif %}>
+          Other
+        
+        <input type="text" id="gender-other" name="gender_other" placeholder="Specify gender" style="display: none;" disabled>
+      </label>
+      </div><br>
+
+
+
+      <div class="form-group">
+        <label for="remarks">Remarks:</label>
+        <textarea id="remarks" name="remarks" rows="4" cols="50">{{ musician.remarks if musician.remarks else '' }}</textarea>
+      </div><br>
+      
+
+      <div class="form-group submit-group">
+        <input type="submit" value="Update" class="submit-button">
+      </div>
+
+    </form>
+
+    <script>
+      const artistRadio = document.getElementById('artist-radio');
+      const nonProfessionalRadio = document.getElementById('non-professional-radio');
+      const bandRadio = document.getElementById('band-radio');
+      const genderField = document.getElementById('gender-field');
+      const otherRadio = document.getElementById('other-radio');
+      const genderOther = document.getElementById('gender-other');
+
+      // Display gender field based on the musician type
+      function showGenderField() {
+        if (artistRadio.checked || nonProfessionalRadio.checked) {
+          genderField.style.display = 'block';
+        } else {
+          genderField.style.display = 'none';
+          genderOther.style.display = 'none';
+          genderOther.disabled = true;  // Disable the 'other' input field
+        }
+      }
+
+      // Show the 'other' gender input when 'other' is selected
+      otherRadio.addEventListener('click', () => {
+        genderOther.style.display = 'block';
+        genderOther.disabled = false;  // Enable the 'other' input field
+        genderOther.focus();  // Optionally, set focus to 'other' input
+      });
+
+      // Hide 'other' input and disable it if 'male' or 'female' is selected
+      document.querySelectorAll('input[name="gender"]').forEach(radio => {
+        radio.addEventListener('click', (event) => {
+          if (event.target.value !== 'other') {
+            genderOther.style.display = 'none';
+            genderOther.disabled = true;  // Disable the 'other' input field
+          }
+        });
+      });
+
+      // Initialize the form based on the current type and gender
+      showGenderField();
+
+      artistRadio.addEventListener('change', showGenderField);
+      nonProfessionalRadio.addEventListener('change', showGenderField);
+      bandRadio.addEventListener('change', showGenderField);
+    </script>  
+  </div>
+</body>
+
+</html>

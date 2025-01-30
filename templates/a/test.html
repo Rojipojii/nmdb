@@ -1,0 +1,309 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Multi-Select Creatable</title>
+    <style>
+        /* Basic styles for the multi-select component */
+        .combobox {
+            position: relative;
+            width: 300px;
+        }
+
+        .pills-input {
+            display: flex;
+            flex-wrap: wrap;
+            border: 1px solid #ccc;
+            padding: 5px;
+            border-radius: 5px;
+        }
+
+        .pill-group {
+            display: flex;
+            align-items: center;
+            flex-wrap: wrap;
+        }
+
+        .pill {
+            background-color: #e0e0e0;
+            padding: 5px 10px;
+            margin: 2px;
+            border-radius: 15px;
+            display: flex;
+            align-items: center;
+        }
+
+        .remove-button {
+            background: none;
+            border: none;
+            cursor: pointer;
+            margin-left: 5px;
+        }
+
+        .combobox-dropdown {
+            position: absolute;
+            top: 100%;
+            left: 0;
+            right: 0;
+            border: 1px solid #ccc;
+            background-color: white;
+            max-height: 150px;
+            overflow-y: auto;
+            display: none; /* Initially hidden */
+        }
+
+        .combobox-options {
+            list-style: none;
+            padding: 0;
+            margin: 0;
+        }
+
+        .combobox-option {
+            padding: 10px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+        }
+
+        .combobox-option:hover {
+            background-color: #f0f0f0;
+        }
+
+        .check-icon {
+            margin-right: 5px;
+            font-size: 12px;
+        }
+
+        .combobox-empty {
+            padding: 10px;
+            color: #888;
+        }
+    </style>
+</head>
+<body>
+    <!-- Form with Multi-Select Creatable Component -->
+    <form id="gender-form" action="/submit-genders" method="post">
+        <div class="combobox">
+            <!-- Dropdown Target -->
+            <div class="pills-input" onclick="toggleDropdown()">
+                <div class="pill-group" id="pill-group">
+                    <!-- Selected Values (Pills) will be dynamically added here -->
+                </div>
+                <!-- Input Field for Searching and Adding New Items -->
+                <input
+                    type="text"
+                    id="search-input"
+                    placeholder="Search values"
+                    oninput="handleInput(event)"
+                    onkeydown="handleKeyDown(event)"
+                />
+            </div>
+
+            <!-- Dropdown Menu -->
+            <div class="combobox-dropdown" id="combobox-dropdown">
+                <ul class="combobox-options" id="combobox-options">
+                    <!-- Options will be dynamically added here -->
+                </ul>
+            </div>
+        </div>
+
+        <!-- Submit Button -->
+        <!-- <button type="submit">Submit</button> -->
+    </form>
+
+    <script>
+        const apiUrl = '/genders'; // Update to your backend API URL
+
+        let data = []; // To hold options fetched from the backend
+        let selectedValues = [];
+
+        const searchInput = document.getElementById('search-input');
+        const comboboxDropdown = document.getElementById('combobox-dropdown');
+        const comboboxOptions = document.getElementById('combobox-options');
+        const pillGroup = document.getElementById('pill-group');
+        const genderForm = document.getElementById('gender-form');
+
+        function fetchGenders() {
+            fetch(apiUrl)
+                .then(response => {
+                    if (response.ok) {
+                        return response.json();
+                    } else {
+                        return response.text().then(text => { throw new Error(text); });
+                    }
+                })
+                .then(genders => {
+                    data = [...genders];
+                    updateOptions();
+                })
+                .catch(error => console.error('Error fetching genders:', error));
+        }
+
+        function toggleDropdown() {
+            if (comboboxDropdown.style.display === 'none' || comboboxDropdown.style.display === '') {
+                comboboxDropdown.style.display = 'block';
+                updateOptions();
+            } else {
+                comboboxDropdown.style.display = 'none';
+            }
+        }
+
+        function updateOptions() {
+            const searchValue = searchInput.value.trim().toLowerCase();
+            const filteredOptions = data.filter(item => item.toLowerCase().includes(searchValue));
+
+            comboboxOptions.innerHTML = '';
+
+            filteredOptions.forEach(item => {
+                const li = document.createElement('li');
+                li.className = 'combobox-option';
+                li.textContent = item;
+
+                if (selectedValues.includes(item)) {
+                    const checkIcon = document.createElement('span');
+                    checkIcon.className = 'check-icon';
+                    checkIcon.textContent = '✔';
+                    li.prepend(checkIcon);
+                }
+
+                li.onclick = () => handleOptionSelect(item);
+                comboboxOptions.appendChild(li);
+            });
+
+            if (searchValue.length > 0 && !data.some(item => item.toLowerCase() === searchValue)) {
+                const li = document.createElement('li');
+                li.className = 'combobox-option';
+                li.textContent = `+ Create ${searchInput.value}`;
+                li.onclick = () => createOption(searchInput.value);
+                comboboxOptions.appendChild(li);
+            }
+
+            if (filteredOptions.length === 0 && searchValue.length > 0) {
+                const li = document.createElement('li');
+                li.className = 'combobox-empty';
+                li.textContent = 'Nothing found';
+                comboboxOptions.appendChild(li);
+            }
+        }
+
+        function handleInput(event) {
+            updateOptions();
+        }
+
+        function handleKeyDown(event) {
+            if (event.key === 'Backspace' && searchInput.value.length === 0 && selectedValues.length > 0) {
+                event.preventDefault();
+                removePill(selectedValues[selectedValues.length - 1]);
+            }
+        }
+
+        function handleOptionSelect(item) {
+            if (selectedValues.includes(item)) {
+                removePill(item);
+            } else {
+                addPill(item);
+            }
+            searchInput.value = '';
+            updateOptions();
+        }
+
+        function addPill(item) {
+            if (!searchInput) {
+                console.error('searchInput element not found');
+                return;
+            }
+            
+            selectedValues.push(item);
+            const pill = document.createElement('span');
+            pill.className = 'pill';
+            pill.textContent = item;
+
+            const removeButton = document.createElement('button');
+            removeButton.className = 'remove-button';
+            removeButton.textContent = 'x';
+            removeButton.onclick = () => removePill(item);
+            pill.appendChild(removeButton);
+
+            if (pillGroup.contains(searchInput)) {
+                pillGroup.insertBefore(pill, searchInput);
+            } else {
+                pillGroup.appendChild(pill);
+            }
+        }
+
+        function removePill(item) {
+            selectedValues = selectedValues.filter(val => val !== item);
+            updatePills();
+        }
+
+        function updatePills() {
+            pillGroup.querySelectorAll('.pill').forEach(pill => pill.remove());
+
+            selectedValues.forEach(item => {
+                addPill(item);
+            });
+
+            updateOptions();
+        }
+
+        function createOption(newItem) {
+            if (newItem.trim() === '') {
+                console.warn('Cannot create an empty item.');
+                return;
+            }
+            if (data.includes(newItem)) {
+                console.warn('Item already exists.');
+                return;
+            }
+
+            fetch(apiUrl, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({ name: newItem })
+            })
+            .then(response => response.json())
+            .then(result => {
+                if (result.error) {
+                    console.error('Error:', result.error);
+                } else {
+                    data.push(newItem);
+                    addPill(newItem);
+                    searchInput.value = '';
+                    updateOptions();
+                }
+            })
+            .catch(error => console.error('Error creating new item:', error));
+        }
+
+        // Form submission handler
+        genderForm.addEventListener('submit', function(event) {
+            event.preventDefault(); // Prevent default form submission
+            
+            fetch(apiUrl, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({ genders: selectedValues })
+            })
+            .then(response => response.json())
+            .then(result => {
+                if (result.error) {
+                    console.error('Error:', result.error);
+                } else {
+                    console.log('Form submitted successfully:', result);
+                    // Optionally clear the form or provide feedback
+                    selectedValues = [];
+                    updatePills();
+                }
+            })
+            .catch(error => console.error('Error submitting form:', error));
+        });
+
+        document.addEventListener('DOMContentLoaded', fetchGenders);
+    </script>
+</body>
+</html>

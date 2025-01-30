@@ -1,0 +1,307 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/navbar.css') }}">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/addmusic.css') }}">
+    <!--JavaScript file -->
+    <script src="{{ url_for('static', filename='js/addmusic.js') }}"></script>
+    <title>Add Musicians</title>
+</head>
+<body>
+    <div id="header-placeholder"></div>
+
+
+    <script>
+        // JavaScript to include header
+        fetch('/header')
+            .then(response => response.text())
+            .then(data => {
+                document.getElementById('header-placeholder').innerHTML = data;
+            })
+            .catch(error => console.error('Error fetching header:', error));
+    </script>
+
+    <!-- Flash Messages -->
+    <!-- {% with messages = get_flashed_messages(with_categories=True) %}
+        {% if messages %}
+            <div class="flash-messages">
+                {% for category, message in messages %}
+                    <div class="flash {{ category }}">{{ message }}</div>
+                {% endfor %}
+            </div>
+        {% endif %}
+    {% endwith %} -->
+
+    
+    <!-- <h3>Add Musicians</h3> -->
+
+
+    <br><br>
+    <div class="radio-buttons">
+        <p>Type</p>
+        <label>
+            <input type="radio" id="artist-radio" name="search-type" value="artist">
+            Artist
+        </label>
+        <label>
+            <input type="radio" id="band-radio" name="search-type" value="band">
+            Band
+        </label>
+    </div>
+
+    <!-- Artist login -->
+    <div id="artist-login" class="login-form" style="display: none;">
+        <h3>Artist</h3><br><br>
+        <form method="POST" action="/addartist" enctype="multipart/form-data">
+            <label for="full-name">Full name:</label>
+            <input type="text" id="full-name" name="full-name"><br><br>
+            <label for="artist-birthdate">Birth date:</label>
+            <input type="date" id="artist-birthdate" name="artist-birthdate">
+            <label for="artist-place">Place:</label>
+            <input type="text" id="artist-place" name="artist-place"><br><br>
+            <label for="artist-deathdate">Death date:</label>
+            <input type="date" id="artist-deathdate" name="artist-deathdate">
+            <label for="artist-deathplace">Place:</label>
+            <input type="text" id="artist-deathplace" name="artist-deathplace"><br><br>
+
+            <!--bio-->
+            <label for="bio">Bio:</label>
+            <textarea id="bio" name="bio" placeholder="Write something..."></textarea><br><br>
+
+            <!--cover image-->
+            <label for="imageUpload">Cover image:</label>
+            <input type="file" id="imageUpload" name="image" accept="image/*"><br><br>
+
+            <!--genre select-->
+            <label for="genreSelect">Genre:</label>
+            <div class="dropdown">
+                <button type="button" class="dropdown-button" id="dropdownButton">Select Genre</button>
+                <div class="dropdown-content" id="dropdownContent">
+                    <a href="#" onclick="selectGenre('Rock')">Rock</a>
+                    <a href="#" onclick="selectGenre('Pop')">Pop</a>
+                    <a href="#" onclick="selectGenre('Jazz')">Jazz</a>
+                    <a href="#" onclick="selectGenre('Classical')">Classical</a>
+                    <a href="#" onclick="selectGenre('Hip-Hop')">Hip-Hop</a>
+                </div>
+            </div>
+            <input type="hidden" name="genre" id="selectedGenre"><br> <br>
+
+            <!--discography-->
+            <div class="form-group">
+                <label>Discography:</label>
+                <div class="entry-container" id="discographyContainer">
+                    <div class="entry">
+                        <input type="text" name="discography[]" placeholder="Album/Song Title">
+
+                    </div>
+                </div>
+                <div class="add-button-container">
+                    <button type="button" onclick="addEntry('discography')">Add Discography</button>
+                </div>
+            </div>
+
+            <!--Award-->
+            <div class="form-group">
+                <label>Awards:</label>
+                <div class="entry-container" id="awardsContainer">
+                    <div class="entry">
+                        <input type="text" name="awards[]" placeholder="Award Title">
+                    </div>
+                </div>
+                <div class="add-button-container">
+                    <button type="button" onclick="addEntry('awards')">Add Award</button><br> <br>
+                </div>
+            </div>
+
+            <!--social-->
+            <div class="inline-form-group">
+                <label for="artist-website">Website:</label>
+                <input type="text" id="artist-website" name="artist-website" placeholder="Website URL">
+            </div>
+
+            <div class="social-media-container">
+                <div class="social-media-group">
+                    <label for="facebook">Facebook:</label>
+                    <input type="text" id="facebook" name="facebook" placeholder="Facebook URL">
+                </div>
+                <div class="social-media-group">
+                    <label for="twitter">Twitter:</label>
+                    <input type="text" id="twitter" name="twitter" placeholder="Twitter URL">
+                </div>
+                <div class="social-media-group">
+                    <label for="instagram">Instagram:</label>
+                    <input type="text" id="instagram" name="instagram" placeholder="Instagram URL">
+                </div>
+                <div class="social-media-group">
+                    <label for="youtube">YouTube:</label>
+                    <input type="text" id="youtube" name="youtube" placeholder="YouTube URL">
+                </div>
+                <div class="social-media-group">
+                    <label for="spotify">Spotify:</label>
+                    <input type="text" id="spotify" name="spotify" placeholder="Spotify URL">
+                </div>
+                <div class="social-media-group">
+                    <label for="apple-music">Apple Music:</label>
+                    <input type="text" id="apple-music" name="apple-music" placeholder="Apple Music URL">
+                </div>
+                <div class="social-media-group">
+                    <label for="soundcloud">SoundCloud:</label>
+                    <input type="text" id="soundcloud" name="soundcloud" placeholder="SoundCloud URL">
+                </div>
+                <div class="social-media-group">
+                    <label for="noodle">Noodle:</label>
+                    <input type="text" id="noodle" name="noodle" placeholder="Noodle URL"><br> <br>
+                </div>
+            </div><br>
+
+            <!-- Inside your form, where you want the player to appear -->
+        <!-- <div class="form-group">
+            <label for="player-embed">Player Embed:</label> -->
+            <!-- Example of directly embedding a Spotify player -->
+            <!-- <iframe style="border-radius:12px" src="https://open.spotify.com/embed/artist/1deQzOQwArAsUgm2WdjtyI?utm_source=generator&theme=0" width="100%" height="352" frameborder="0" allowfullscreen="" allow="autoplay; clipboard-write; encrypted-media; fullscreen; picture-in-picture" loading="lazy"></iframe> -->
+            <!-- Alternatively, you can use a textarea for users to input their own embed code -->
+            <!-- <textarea id="player-embed" name="player-embed" placeholder="Player embed code"></textarea><br><br>
+        </div> -->
+
+
+            <div class="form-group">
+                <label for="player-embed">Player embed:</label>
+                <textarea id="player-embed" name="player-embed" placeholder="Player embed code"></textarea><br><br>
+                <!-- <button type="button" onclick="addPlayerEntry()">Add Player</button> -->
+                <button type="submit">Submit</button>
+            </div>
+        </form>
+    </div>
+    
+    <!--Band login-->
+    <div id="band-login" class="login-form" style="display: none;">
+        <h3>Band</h3><br><br>
+        <form method="POST" action="/addband" enctype="multipart/form-data">
+            <label for="band-name">Band name:</label>
+            <input type="text" id="band-name" name="band-name"><br><br>
+            <label for="band-formedin">Formed in:</label>
+            <input type="date" id="band-formedin" name="band-formedin">
+            <label for="band-place">Place:</label>
+            <input type="text" id="band-place" name="band-place"><br><br>
+            <label for="band-disband">Disbanded in:</label>
+            <input type="date" id="band-disband" name="band-disband"><br><br>
+
+            <!--bio-->
+            <label for="bio">Bio:</label>
+            <textarea id="bio" name="bio" placeholder="Write something..."></textarea><br><br>
+
+            <!--cover image-->
+            <label for="imageUpload">Cover image:</label>
+            <input type="file" id="imageUpload" name="image" accept="image/*"><br><br>
+
+            <!--genre select-->
+            <label for="genreSelect">Genre:</label>
+            <div class="dropdown">
+                <button type="button" class="dropdown-button" id="dropdownButton">Select Genre</button>
+                <div class="dropdown-content" id="dropdownContent">
+                    <a href="#" onclick="selectGenre('Rock')">Rock</a>
+                    <a href="#" onclick="selectGenre('Pop')">Pop</a>
+                    <a href="#" onclick="selectGenre('Jazz')">Jazz</a>
+                    <a href="#" onclick="selectGenre('Classical')">Classical</a>
+                    <a href="#" onclick="selectGenre('Hip-Hop')">Hip-Hop</a>
+                </div>
+            </div>
+            <input type="hidden" name="genre" id="selectedGenre"><br> <br>
+
+            <label for="band-member">Band Members:</label>
+            <textarea id="band-member" name="band-member" placeholder="Write the band members..."></textarea><br><br>
+
+            <label for="past-member">Past-members:</label>
+            <textarea id="past-member" name="past-member" placeholder="Write the past members..."></textarea><br><br>
+
+            <!--discography-->
+            <div class="form-group">
+                <label>Discography:</label>
+                <div class="entry-container" id="discographyContainer">
+                    <div class="entry">
+                        <input type="text" name="discography[]" placeholder="Album/Song Title">
+
+                    </div>
+                </div>
+                <div class="add-button-container">
+                    <button type="button" onclick="addEntry('discography')">Add Discography</button>
+                </div>
+            </div>
+
+            <!--Award-->
+            <div class="form-group">
+                <label>Awards:</label>
+                <div class="entry-container" id="awardsContainer">
+                    <div class="entry">
+                        <input type="text" name="awards[]" placeholder="Award Title">
+                    </div>
+                </div>
+                <div class="add-button-container">
+                    <button type="button" onclick="addEntry('awards')">Add Award</button><br> <br>
+                </div>
+            </div>
+
+            <!--social-->
+            <div class="inline-form-group">
+                <label for="band-website">Website:</label>
+                <input type="text" id="band-website" name="band-website" placeholder="Website URL">
+            </div>
+
+            <div class="social-media-container">
+                <div class="social-media-group">
+                    <label for="facebook">Facebook:</label>
+                    <input type="text" id="facebook" name="facebook" placeholder="Facebook URL">
+                </div>
+                <div class="social-media-group">
+                    <label for="twitter">Twitter:</label>
+                    <input type="text" id="twitter" name="twitter" placeholder="Twitter URL">
+                </div>
+                <div class="social-media-group">
+                    <label for="instagram">Instagram:</label>
+                    <input type="text" id="instagram" name="instagram" placeholder="Instagram URL">
+                </div>
+                <div class="social-media-group">
+                    <label for="youtube">YouTube:</label>
+                    <input type="text" id="youtube" name="youtube" placeholder="YouTube URL">
+                </div>
+                <div class="social-media-group">
+                    <label for="spotify">Spotify:</label>
+                    <input type="text" id="spotify" name="spotify" placeholder="Spotify URL">
+                </div>
+                <div class="social-media-group">
+                    <label for="apple-music">Apple Music:</label>
+                    <input type="text" id="apple-music" name="apple-music" placeholder="Apple Music URL">
+                </div>
+                <div class="social-media-group">
+                    <label for="soundcloud">SoundCloud:</label>
+                    <input type="text" id="soundcloud" name="soundcloud" placeholder="SoundCloud URL">
+                </div>
+                <div class="social-media-group">
+                    <label for="noodle">Noodle:</label>
+                    <input type="text" id="noodle" name="noodle" placeholder="Noodle URL"><br> <br>
+                </div>
+            </div><br>
+
+            <!-- Inside your form, where you want the player to appear -->
+        <!-- <div class="form-group">
+            <label for="player-embed">Player Embed:</label> -->
+            <!-- Example of directly embedding a Spotify player -->
+            <!-- <iframe style="border-radius:12px" src="https://open.spotify.com/embed/artist/1deQzOQwArAsUgm2WdjtyI?utm_source=generator&theme=0" width="100%" height="352" frameborder="0" allowfullscreen="" allow="autoplay; clipboard-write; encrypted-media; fullscreen; picture-in-picture" loading="lazy"></iframe> -->
+            <!-- Alternatively, you can use a textarea for users to input their own embed code -->
+            <!-- <textarea id="player-embed" name="player-embed" placeholder="Player embed code"></textarea><br><br>
+        </div> -->
+
+
+            <div class="form-group">
+                <label for="player-embed">Player embed:</label>
+                <textarea id="player-embed" name="player-embed" placeholder="Player embed code"></textarea><br><br>
+                <!-- <button type="button" onclick="addPlayerEntry()">Add Player</button> -->
+                <button type="submit">Submit</button>
+            </div>
+        </form>
+    </div>
+
+</body>
+</html>

@@ -1,0 +1,150 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/navbar.css') }}">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/dashboard.css') }}">
+    <title>Dashboard</title>
+</head>
+<body>
+    <div id="header-placeholder"></div>
+
+    <script>
+        // JavaScript to include header
+        fetch('/header')
+            .then(response => response.text())
+            .then(data => {
+                document.getElementById('header-placeholder').innerHTML = data;
+            })
+            .catch(error => console.error('Error fetching header:', error));
+    </script>
+
+    <br><br>
+
+    <!-- Flash message section -->
+    {% with messages = get_flashed_messages(with_categories=True) %}
+        {% if messages %}
+            <div class="container mt-3">
+                {% for category, message in messages %}
+                    <div class="alert alert-{{ category }} alert-dismissible fade show" role="alert">
+                        {{ message }}
+                        <button type="button" class="close" data-dismiss="alert" aria-label="Close">
+                            <span aria-hidden="true">&times;</span>
+                        </button>
+                    </div>
+                {% endfor %}
+            </div>
+        {% endif %}
+    {% endwith %}
+
+    <!-- Container for tables -->
+    <div class="container mt-4">
+        
+
+        <div class="table-responsive mb-4">
+            <table class="table table-bordered table-striped">
+                <thead class="thead-dark">
+                    <tr>
+                        <th>Total Musicians</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td>{{ total_count }}</td> <!-- Total number of musicians -->
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+
+        <!-- Table for Ready Profiles -->
+<div class="table-responsive mb-4">
+    <table class="table table-bordered table-striped">
+        <thead class="thead-dark">
+            <tr>
+                <th>Profile Status</th>
+                <th>Count</th>
+            </tr>
+        </thead>
+        <tbody>
+            <tr>
+                <td>Profiles Ready</td>
+                <td>{{ ready_profiles }}</td> <!-- Display the count of ready profiles -->
+            </tr>
+        </tbody>
+    </table>
+</div>
+
+
+        <!-- Table of Musicians by Type -->
+        <div class="table-responsive mb-4">
+            <table class="table table-bordered table-striped">
+                <thead class="thead-dark">
+                    <tr>
+                        <th>Type</th>
+                        <th>Total</th>
+                        <th>Percentage</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td>Artists</td>
+                        <td>{{ total_artists }}</td>
+                        <td>{{ percentage_artists|round(2) }}%</td>
+                    </tr>
+                    <tr>
+                        <td>Bands</td>
+                        <td>{{ total_bands }}</td>
+                        <td>{{ percentage_bands|round(2) }}%</td>
+                    </tr>
+                    <tr>
+                        <td>Non-Professional</td>
+                        <td>{{ total_non_professional }}</td>
+                        <td>{{ percentage_non_professional|round(2) }}%</td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+        <!-- Table of Musicians by Gender -->
+        <div class="table-responsive">
+            <table class="table table-bordered table-striped">
+                <thead class="thead-dark">
+                    <tr>
+                        <th>Gender</th>
+                        <th>Total</th>
+                        <th>Percentage</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td>Male</td>
+                        <td>{{ male_count }}</td>
+                        <td>{{ male_percentage }}%</td>
+                    </tr>
+                    <tr>
+                        <td>Female</td>
+                        <td>{{ female_count }}</td>
+                        <td>{{ female_percentage }}%</td>
+                    </tr>
+                    <tr>
+                        <td>Other</td>
+                        <td>{{ other_count }}</td>
+                        <td>{{ other_percentage }}%</td>
+                    </tr>
+                    <tr>
+                        <td>Unknown</td>
+                        <td>{{ unknown_count }}</td>
+                        <td>{{ unknown_percentage }}%</td>
+                    </tr>
+                </tbody>
+                
+            </table>
+        </div>
+    </div>
+
+    <!-- Bootstrap JS and dependencies -->
+    <script src="https://code.jquery.com/jquery-3.5.1.slim.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@popperjs/core@2.9.2/dist/umd/popper.min.js"></script>
+    <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.min.js"></script>
+</body>
+</html>

@@ -1,0 +1,547 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/navbar.css') }}">
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/addmusic.css') }}">
+  <link rel="stylesheet" href="https://code.jquery.com/ui/1.12.1/themes/base/jquery-ui.css">
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+  <link href="https://cdnjs.cloudflare.com/ajax/libs/select2/4.1.0-beta.1/css/select2.min.css" rel="stylesheet" />
+  <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+  <script src="https://code.jquery.com/ui/1.12.1/jquery-ui.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/select2/4.1.0-beta.1/js/select2.min.js"></script>
+  <title>Add Musicians</title>
+  <script>
+    $(document).ready(function () {
+      $('#genreSelect').select2({
+          placeholder: "Select Genre",
+          allowClear: true
+      });
+  
+      $('#musician-select').select2({
+          placeholder: "Select a musician",
+          allowClear: true
+      });
+  
+      $('input[name="type"]').on('change', function () {
+          const selectedType = $(this).val();
+  
+          console.log('Selected Type:', selectedType); // Debugging line
+  
+          $('#other-fields').show();
+  
+          if (selectedType === 'band') {
+              $('#band-formation-info').show();
+              $('#artist-birth-info').hide();
+              $('#band-members-field').show();
+              $('#featured-artist-field').hide();
+          } else if (selectedType === 'artist') {
+              $('#band-formation-info').hide();
+              $('#artist-birth-info').show();
+              $('#band-members-field').hide();
+              $('#featured-artist-field').show();
+          } else if (selectedType === 'non-professional') {
+              $('#band-formation-info').hide();
+              $('#artist-birth-info').hide();
+              $('#band-members-field').hide();
+              $('#featured-artist-field').show();
+          } else {
+              $('#band-formation-info').hide();
+              $('#artist-birth-info').hide();
+              $('#band-members-field').hide();
+              $('#featured-artist-field').hide();
+          }
+  
+          if (selectedType === 'artist' || selectedType === 'non-professional') {
+              $('#gender-field').show();
+              $('#discographyContainer').show();
+              $('#awardsContainer').show();
+              $('#social-media').show();
+          } else {
+              $('#gender-field').hide();
+              $('#discographyContainer').show();
+              $('#awardsContainer').show();
+              $('#social-media').show();
+          }
+      });
+  
+      function updateFieldVisibility() {
+          console.log('Updating field visibility...'); // Debugging line
+  
+          if (artistRadio.checked || nonProfessionalRadio.checked || bandRadio.checked) {
+              otherFields.style.display = 'block';
+          } else {
+              otherFields.style.display = 'none';
+          }
+  
+          if (artistRadio.checked || nonProfessionalRadio.checked) {
+              genderField.style.display = 'block';
+          } else {
+              genderField.style.display = 'none';
+          }
+  
+          if (!otherRadio.checked) {
+              genderOther.style.display = 'none';
+              genderOther.disabled = true;
+          }
+      }
+  
+      const artistRadio = document.getElementById('artist-radio');
+      const nonProfessionalRadio = document.getElementById('non-professional-radio');
+      const bandRadio = document.getElementById('band-radio');
+      const otherFields = document.getElementById('other-fields');
+      const genderField = document.getElementById('gender-field');
+      const otherRadio = document.getElementById('other-radio');
+      const genderOther = document.getElementById('gender-other');
+  
+      artistRadio.addEventListener('change', updateFieldVisibility);
+      nonProfessionalRadio.addEventListener('change', updateFieldVisibility);
+      bandRadio.addEventListener('change', updateFieldVisibility);
+  
+      otherRadio.addEventListener('click', () => {
+          genderOther.style.display = 'block';
+          genderOther.disabled = false;
+          genderOther.focus();
+      });
+  
+      document.querySelectorAll('input[name="gender"]').forEach(radio => {
+          radio.addEventListener('click', (event) => {
+              if (event.target.value !== 'other') {
+                  genderOther.style.display = 'none';
+                  genderOther.disabled = true;
+              }
+          });
+      });
+  
+      updateFieldVisibility(); // Ensure initial visibility setup
+  
+      // Ensure band members fields are not required
+      $('#band-members-field input').prop('required', false);
+  
+      // Initialize year-only datepicker
+      $("#band-formed-date, #band-disbanded-date, #artist-birthdate, #artist-deathdate").datepicker({
+          changeYear: true,
+          showButtonPanel: true,
+          dateFormat: 'yy',
+          onChangeMonthYear: function (year, month, inst) {
+              $(this).val(year);
+          }
+      });
+  
+      // Custom validation
+      $('form').on('submit', function(event) {
+          var isValid = true;
+          
+          // Validate Name in English
+          if (!$('#name_en').val()) {
+              isValid = false;
+              $('#name_en').addClass('is-invalid');
+              $('#name_en').next('.invalid-feedback').show();
+          } else {
+              $('#name_en').removeClass('is-invalid');
+              $('#name_en').next('.invalid-feedback').hide();
+          }
+  
+          // Validate Name in Nepali
+          if (!$('#name_np').val()) {
+              isValid = false;
+              $('#name_np').addClass('is-invalid');
+              $('#name_np').next('.invalid-feedback').show();
+          } else {
+              $('#name_np').removeClass('is-invalid');
+              $('#name_np').next('.invalid-feedback').hide();
+          }
+  
+          if (!isValid) {
+              event.preventDefault();
+          }
+      });
+  
+      function addEntry(type) {
+          const container = document.getElementById(type + 'Container');
+          const entryDiv = document.createElement('div');
+          entryDiv.classList.add('entry');
+          const input = document.createElement('input');
+          input.type = 'text';
+          input.name = type + '[]';
+          input.placeholder = type === 'discography' ? 'Album/Song Title' : 'Award Title';
+          entryDiv.appendChild(input);
+          container.appendChild(entryDiv);
+      }
+  
+      let bandMemberIndex = 1;
+  
+      // Define addBandMember globally
+      window.addBandMember = function() {
+          console.log('Add Band Member function called'); // Debugging line
+          const container = document.getElementById('band-members-container');
+          const newEntry = document.createElement('div');
+          newEntry.className = 'row band-member-entry align-items-center';
+      
+          newEntry.innerHTML = `
+              <div class="col-md-4 mb-2">
+                  <label for="musician_id_${bandMemberIndex}" class="form-label">Artist Name</label>
+                  <select name="band_members[][musician_id]" id="musician_id_${bandMemberIndex}" class="form-control">
+                      <option value="" disabled selected>Select an artist</option>
+                      {% for musician in musicians %}
+                          {% if musician.type == 'artist' %}
+                              <option value="{{ musician.id }}">{{ musician.name }}</option>
+                          {% endif %}
+                      {% endfor %}
+                  </select>
+              </div>
+  
+              <div class="col-md-4 mb-2">
+                  <label for="position_${bandMemberIndex}" class="form-label">Designation</label>
+                  <input type="text" name="band_members[][position]" id="position_${bandMemberIndex}" class="form-control">
+              </div>
+  
+              <div class="col-md-4 mb-2 d-flex align-items-center">
+                  <label for="active_${bandMemberIndex}" class="form-label me-2">Active Member</label>
+                  <div class="form-check me-2">
+                      <input type="checkbox" name="band_members[][active]" id="active_${bandMemberIndex}" class="form-check-input">
+                      <label for="active_${bandMemberIndex}" class="form-check-label">Yes</label>
+                  </div>
+                  <button type="button" class="btn btn-danger btn-sm" onclick="removeBandMember(this)">-</button>
+              </div>
+          `;
+      
+          container.appendChild(newEntry);
+          bandMemberIndex++;
+      }
+  
+      function removeBandMember(button) {
+          const container = document.getElementById('band-members-container');
+          container.removeChild(button.closest('.band-member-entry'));
+      }
+  
+      let featuredArtistIndex = 1;
+  
+      function addFeaturedArtist() {
+          const container = document.getElementById('featured-artist-container');
+          const newEntry = document.createElement('div');
+          newEntry.className = 'row featured-artist-entry align-items-center';
+  
+          newEntry.innerHTML = `
+              <div class="col-md-4 mb-2">
+                  <label for="featured_artist_id_${featuredArtistIndex}" class="form-label">Featured Artist</label>
+                  <select name="featured_artists[][artist_id]" id="featured_artist_id_${featuredArtistIndex}" class="form-control">
+                      <option value="" disabled selected>Select an artist</option>
+                      {% for musician in musicians %}
+                          {% if musician.type == 'artist' %}
+                              <option value="{{ musician.id }}">{{ musician.name }}</option>
+                          {% endif %}
+                      {% endfor %}
+                  </select>
+              </div>
+  
+              <div class="col-md-4 mb-2">
+                  <label for="featured_artist_contribution_${featuredArtistIndex}" class="form-label">Contribution</label>
+                  <input type="text" name="featured_artists[][contribution]" id="featured_artist_contribution_${featuredArtistIndex}" class="form-control">
+              </div>
+  
+              <div class="col-md-4 mb-2 d-flex align-items-center">
+                  <button type="button" class="btn btn-danger btn-sm" onclick="removeFeaturedArtist(this)">-</button>
+              </div>
+          `;
+      
+          container.appendChild(newEntry);
+          featuredArtistIndex++;
+      }
+      
+      function removeFeaturedArtist(button) {
+          const container = document.getElementById('featured-artist-container');
+          container.removeChild(button.closest('.featured-artist-entry'));
+      }
+  
+      // Event listeners for the form submission, band members, and featured artists
+      document.getElementById('addBandMemberBtn').addEventListener('click', addBandMember);
+      document.getElementById('addFeaturedArtistBtn').addEventListener('click', addFeaturedArtist);
+  });
+  
+    </script>
+  
+
+</head>
+
+<body>
+  <div id="header-placeholder"></div>
+  <script>
+    fetch('/header')
+      .then(response => response.text())
+      .then(data => {
+        document.getElementById('header-placeholder').innerHTML = data;
+      })
+      .catch(error => console.error('Error fetching header:', error));
+  </script>
+
+  <br><br><br><br><br><br>
+
+  <!-- Name Form -->
+  <div class="form-container">
+    <form class="add-musicians-form" method="POST" action="/addartists" id="musicians-form">
+
+      <!-- Type Field -->
+      <div class="form-group">
+        <p>Type:</p>
+        <label class="radio-label">
+          <input type="radio" name="type" value="artist" id="artist-radio" required> Artist
+        </label>
+        <label class="radio-label">
+          <input type="radio" name="type" value="band" id="band-radio" required> Band
+        </label>
+        <label class="radio-label">
+          <input type="radio" name="type" value="non-professional" id="non-professional-radio" required>
+          Non-Professional
+        </label>
+      </div>
+
+      <!-- Other fields (initially hidden) -->
+      <div id="other-fields" style="display: none;">
+        <!-- Name in English -->
+<div class="form-group">
+  <label for="name_en">Name in English:</label>
+  <input type="text" id="name_en" name="name_en" required>
+  <div class="invalid-feedback">Name in English is required.</div>
+</div>
+
+<!-- Name in Nepali -->
+<div class="form-group">
+  <label for="name_np">Name in Nepali:</label>
+  <input type="text" id="name_np" name="name_np" required>
+  <div class="invalid-feedback">Name in Nepali is required.</div>
+</div>
+
+
+        <div id="gender-field" class="form-group">
+          <p>Gender:</p>
+          <label class="radio-label">
+            <input type="radio" name="gender" value="male"> Male
+          </label>
+          <label class="radio-label">
+            <input type="radio" name="gender" value="female"> Female
+          </label>
+          <label class="radio-label">
+            <input type="radio" name="gender" value="other" id="other-radio"> Other
+          </label>
+          <input type="text" id="gender-other" name="gender_other" placeholder="Please specify" style="display:none;"
+            disabled>
+        </div>
+
+        <!-- Genre Selection -->
+        <div class="mb-3">
+          <label for="genreSelect" class="form-label">Genre</label>
+          <select id="genreSelect" name="genre" class="form-select" multiple="multiple">
+            <option value="Rock">Rock</option>
+            <option value="Pop">Pop</option>
+            <option value="Jazz">Jazz</option>
+            <option value="Classical">Classical</option>
+            <option value="Hip-Hop">Hip-Hop</option>
+          </select>
+        </div>
+
+        <!-- Profile Image -->
+        <div class="mb-3">
+          <label for="imageUpload" class="form-label">Profile image</label>
+          <input type="file" id="profile_image" name="profile_image" class="form-control" accept="image/*">
+        </div> 
+
+        <!-- Cover Image -->
+        <div class="mb-3">
+          <label for="imageUpload" class="form-label">Cover image</label>
+          <input type="file" id="cover_image" name="cover_image" class="form-control" accept="image/*">
+        </div>
+
+        <!-- Bio -->
+        <div class="mb-3">
+          <label for="bio" class="form-label">Bio</label>
+          <textarea id="bio" name="bio" class="form-control" rows="4" placeholder="Write something..."></textarea>
+        </div>
+
+        <!-- For Bands -->
+        <div class="row" id="band-formation-info" style="display: none;">
+          <div class="col-md-6 mb-3">
+            <label for="band-formed-date" class="form-label">Formed date</label>
+            <input type="date" id="band-formed-date" name="birth_date" class="form-control">
+          </div>
+          <div class="col-md-6 mb-3">
+            <label for="band-formed-place" class="form-label">Formed place</label>
+            <input type="text" id="band-formed-place" name="birthplace" class="form-control">
+          </div>
+          <div class="col-md-6 mb-3">
+            <label for="band-disbanded-date" class="form-label">Disbanded date</label>
+            <input type="date" id="band-disbanded-date" name="death_date" class="form-control">
+          </div>
+        </div>
+
+        <!-- For Artists -->
+        <div class="row" id="artist-birth-info" style="display: none;">
+          <div class="col-md-6 mb-3">
+            <label for="artist-birthdate" class="form-label">Birthdate</label>
+            <input type="date" id="artist-birthdate" name="birth_date" class="form-control">
+          </div>
+          <div class="col-md-6 mb-3">
+            <label for="artist-birthplace" class="form-label">Birthplace</label>
+            <input type="text" id="artist-birthplace" name="birthplace" class="form-control">
+          </div>
+          <div class="col-md-6 mb-3">
+            <label for="artist-deathdate" class="form-label">Deathdate</label>
+            <input type="date" id="artist-deathdate" name="death_date" class="form-control">
+          </div>
+          <div class="col-md-6 mb-3">
+            <label for="artist-deathplace" class="form-label">Deathplace</label>
+            <input type="text" id="artist-deathplace" name="deathplace" class="form-control">
+          </div>
+        </div>
+
+
+
+        <!-- Band Members Field -->
+        <div id="band-members-field" class="mb-3" style="display: none;">
+          <label for="band-members" class="form-label">Band Members</label>
+          <div id="band-members-container">
+            <!-- Initial Band Member Form -->
+            <div class="row band-member-entry align-items-center">
+              <!-- Artist Name -->
+              <div class="col-md-4 mb-2">
+                <label for="musician_id_0" class="form-label">Artist Name</label>
+                <select name="band_members[][musician_id]" id="musician_id_0" class="form-control">
+                  <option value="" disabled selected>Select an artist</option>
+                  {% for musician in musicians %}
+                  {% if musician.type == 'artist' %}
+                  <option value="{{ musician.id }}">{{ musician.name }}</option>
+                  {% endif %}
+                  {% endfor %}
+                </select>
+              </div>
+
+              <!-- Position -->
+              <div class="col-md-4 mb-2">
+                <label for="position_0" class="form-label">Designation</label>
+                <input type="text" name="band_members[][position]" id="position_0" class="form-control">
+              </div>
+
+              <!-- Active Member Checkbox -->
+              <div class="col-md-4 mb-2 d-flex align-items-center">
+                <label for="active_0" class="form-label me-2">Active Member</label>
+                <div class="form-check me-2">
+                  <input type="checkbox" name="band_members[][active]" id="active_0" class="form-check-input">
+                  <label for="active_0" class="form-check-label">Yes</label>
+                </div>
+                <!-- Add Band Member Button -->
+                <button type="button" class="btn btn-secondary btn-sm" onclick="addBandMember()">+</button>
+              </div>
+            </div>
+          </div>
+        </div>
+
+
+<!-- Featured Artist Field -->
+<div id="featured-artist-field" class="mb-3" style="display: none;">
+  <label for="featured-artist" class="form-label">Featured In</label>
+  <div id="featured-artist-container">
+    <!-- Initial Featured Artist Form -->
+    <div class="row featured-artist-entry align-items-center">
+      <!-- Artist Name -->
+      <div class="col-md-4 mb-2">
+        <label for="featured_musician_id_0" class="form-label">Band Name</label>
+        <select name="featured_artists[][musician_id]" id="featured_musician_id_0" class="form-control">
+          <option value="" disabled selected>Select an artist</option>
+          {% for musician in musicians %}
+          {% if musician.type == 'band' %}
+          <option value="{{ musician.id }}">{{ musician.name }}</option>
+          {% endif %}
+          {% endfor %}
+        </select>
+      </div>
+
+      <!-- Role -->
+      <div class="col-md-4 mb-2">
+        <label for="featured_role_0" class="form-label">Role</label>
+        <input type="text" name="featured_artists[][role]" id="featured_role_0" class="form-control">
+      </div>
+
+      <!-- Featured Checkbox -->
+      <div class="col-md-4 mb-2 d-flex align-items-center">
+        <label for="featured_active_0" class="form-label me-2">Active</label>
+        <div class="form-check me-2">
+          <input type="checkbox" name="featured_artists[][active]" id="featured_active_0" class="form-check-input">
+          <label for="featured_active_0" class="form-check-label">Yes</label>
+        </div>
+        <!-- Add Featured Artist Button -->
+        <button type="button" class="btn btn-secondary btn-sm" onclick="addFeaturedArtist()">+</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+        <!-- Discography -->
+        <!-- <div id="discographyContainer" class="mb-3">
+          <label for="discography" class="form-label">Discography</label>
+          <input type="text" name="discography[]" class="form-control mb-2" placeholder="Album/Song Title">
+        </div>
+        <button type="button" class="btn btn-secondary" onclick="addEntry('discography')">Add Discography</button> -->
+
+        <!-- Awards -->
+        <!-- <div id="awardsContainer" class="mb-3">
+          <label for="awards" class="form-label">Awards</label>
+          <input type="text" name="awards[]" class="form-control mb-2" placeholder="Award Title">
+        </div>
+        <button type="button" class="btn btn-secondary" onclick="addEntry('awards')">Add Award</button> -->
+
+
+        <!-- Social Media -->
+        <div class="mb-3">
+          <label for="social-media" class="form-label">Social Media</label>
+          <div class="row g-3">
+            <div class="col-md-6">
+              <input type="text" id="website" name="website" class="form-control" placeholder="Website URL">
+            </div>
+            <div class="col-md-6">
+              <input type="text" id="facebook" name="facebook" class="form-control" placeholder="Facebook URL">
+            </div>
+            <div class="col-md-6">
+              <input type="text" id="twitter" name="twitter" class="form-control" placeholder="Twitter URL">
+            </div>
+            <div class="col-md-6">
+              <input type="text" id="instagram" name="instagram" class="form-control" placeholder="Instagram URL">
+            </div>
+            <div class="col-md-6">
+              <input type="text" id="youtube" name="youtube" class="form-control" placeholder="YouTube URL">
+            </div>
+            <div class="col-md-6">
+              <input type="text" id="spotify" name="spotify" class="form-control" placeholder="Spotify URL">
+            </div>
+            <div class="col-md-6">
+              <input type="text" id="apple-music" name="apple_music" class="form-control" placeholder="Apple Music URL">
+            </div>
+            <div class="col-md-6">
+              <input type="text" id="soundcloud" name="soundcloud" class="form-control" placeholder="SoundCloud URL">
+            </div>
+            <div class="col-md-6">
+              <input type="text" id="tiktok" name="tiktok" class="form-control" placeholder="Tiktok URL">
+            </div>
+            <!-- <div class="col-md-6">
+              <input type="text" id="noodle" name="noodle" class="form-control" placeholder="Noodle URL">
+            </div> -->
+          </div>
+        </div>
+
+        <!-- Player Embed -->
+        <div class="mb-3">
+          <label for="player_embed" class="form-label">Player Embed</label>
+          <textarea id="player_embed" name="player_embed" class="form-control"></textarea>
+        </div>
+
+
+        <button type="submit" class="btn btn-primary">Submit</button>
+    </form>
+  </div>
+  </div>
+
+  </div>
+</body>
+
+</html>

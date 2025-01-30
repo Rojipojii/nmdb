@@ -1,0 +1,195 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/navbar.css') }}">
+    <title>Manage Roles</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap-icons/1.10.5/font/bootstrap-icons.min.css">
+    <style>
+        .alert-container {
+            position: fixed;
+            top: 1rem;
+            right: 1rem;
+            z-index: 1050; /* Make sure it appears above other content */
+        }
+    </style>
+</head>
+<body>
+    <div id="header-placeholder"></div>
+
+    <!-- Flash messages container -->
+    <div id="flash-messages" class="alert-container"></div>
+
+    <script>
+        // JavaScript to include header
+        fetch('/header')
+            .then(response => response.text())
+            .then(data => {
+                document.getElementById('header-placeholder').innerHTML = data;
+            })
+            .catch(error => console.error('Error fetching header:', error));
+
+        function showFlashMessage(type, message) {
+            const flashMessages = document.getElementById('flash-messages');
+            const alert = document.createElement('div');
+            alert.className = `alert alert-${type} alert-dismissible fade show`;
+            alert.role = 'alert';
+            alert.innerHTML = `
+                ${message}
+                <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+            `;
+            flashMessages.appendChild(alert);
+            // Automatically remove the alert after 5 seconds
+            setTimeout(() => {
+                alert.classList.remove('show');
+                alert.classList.add('fade');
+                setTimeout(() => flashMessages.removeChild(alert), 150);
+            }, 5000);
+        }
+
+        function editRole(roleId) {
+            const inputField = document.getElementById(`role-${roleId}`);
+            const editBtn = document.getElementById(`edit-btn-${roleId}`);
+            const saveBtn = document.getElementById(`save-btn-${roleId}`);
+
+            if (inputField && editBtn && saveBtn) {
+                inputField.disabled = false;
+                editBtn.classList.add('d-none');
+                saveBtn.classList.remove('d-none');
+            } else {
+                console.error('Elements not found for roleId:', roleId);
+            }
+        }
+
+        function updateRole(roleId) {
+            const roleName = document.getElementById(`role-${roleId}`).value;
+
+            fetch('/update_role', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/x-www-form-urlencoded'
+                },
+                body: `role_id=${roleId}&role_name=${encodeURIComponent(roleName)}`
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    showFlashMessage('success', 'Role updated successfully!');
+                    const inputField = document.getElementById(`role-${roleId}`);
+                    const editBtn = document.getElementById(`edit-btn-${roleId}`);
+                    const saveBtn = document.getElementById(`save-btn-${roleId}`);
+
+                    if (inputField && editBtn && saveBtn) {
+                        inputField.disabled = true;
+                        editBtn.classList.remove('d-none');
+                        saveBtn.classList.add('d-none');
+                    } else {
+                        console.error('Elements not found for roleId:', roleId);
+                    }
+                } else {
+                    showFlashMessage('danger', 'Error updating role.');
+                }
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                showFlashMessage('danger', 'Error updating role.');
+            });
+        }
+
+        function addRole() {
+            const roleName = document.getElementById('new-role').value;
+
+            if (!roleName.trim()) {
+                alert('Role name cannot be empty.');
+                return;
+            }
+
+            fetch('/add_role', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/x-www-form-urlencoded'
+                },
+                body: `role=${encodeURIComponent(roleName)}`
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    alert('Role added successfully!');
+                    const tableBody = document.getElementById('roles-table-body');
+if (!tableBody) {
+    console.error('Error: #roles-table-body not found.');
+    return;
+}
+
+                    const newRow = document.createElement('tr');
+                    newRow.innerHTML = `
+                        <td>
+                            <input type="text" class="form-control" value="${roleName}" id="role-${data.role_id}" disabled>
+                        </td>
+                        <td>
+                            <button class="btn btn-primary" id="edit-btn-${data.role_id}" onclick="editRole(${data.role_id})">
+                                <i class="bi bi-pencil"></i>
+                            </button>
+                            <button class="btn btn-success d-none" id="save-btn-${data.role_id}" onclick="updateRole(${data.role_id})">
+                                <i class="bi bi-save"></i>
+                            </button>
+                        </td>
+                    `;
+                    tableBody.appendChild(newRow);
+                    document.getElementById('new-role').value = ''; // Clear input field
+                } else {
+                    alert('Error adding role.');
+                }
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                alert('Error adding role.');
+            });
+        }
+    </script>
+
+    <div class="container mt-5">
+
+         <!-- Form to add a new role -->
+         <!-- Add New Role Form -->
+        <div class="mb-3">
+            <label for="new-role" class="form-label">Add New Role</label>
+            <div class="input-group">
+                <input type="text" class="form-control" id="new-role" placeholder="Enter role name">
+                <button class="btn btn-success" onclick="addRole()">
+                    <i class="bi bi-plus-lg"></i> Add
+                </button>
+            </div>
+        </div>
+
+        <table class="table table-bordered">
+            <thead>
+                <tr>
+                    <th>Role</th>
+                    <th>Action</th>
+                </tr>
+            </thead>
+            <tbody id="roles-table-body">
+                {% for role in roles %}
+                <tr>
+                    <td>
+                        <input type="text" class="form-control" value="{{ role[1] }}" id="role-{{ role[0] }}" disabled>
+                    </td>
+                    <td>
+                        <button class="btn btn-primary" id="edit-btn-{{ role[0] }}" onclick="editRole({{ role[0] }})">
+                            <i class="bi bi-pencil"></i>
+                        </button>
+                        <button class="btn btn-success d-none" id="save-btn-{{ role[0] }}" onclick="updateRole({{ role[0] }})">
+                            <i class="bi bi-save"></i>
+                        </button>
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+
+    </body>
+</html>

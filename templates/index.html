@@ -1,0 +1,158 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>NMDB</title>
+    <!-- Bootstrap CSS -->
+    <link href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css" rel="stylesheet">
+    <style>
+        .musician-card {
+            text-align: center;
+            margin-bottom: 20px;
+        }
+        .musician-card img,
+        .default-icon {
+            width: 100px;
+            height: 100px;
+            border-radius: 50%;
+            object-fit: cover;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin: 0 auto;
+        }
+        .default-icon {
+            font-size: 3rem;
+            background-color: #f0f0f0;
+            border: 1px solid #ddd;
+        }
+        /* Custom styles */
+        .alphabet-links {
+            display: flex;
+            justify-content: center; /* Center align the links horizontally */
+            flex-wrap: wrap; /* Allow wrapping for small screens */
+            gap: 10px; /* Space between links */
+            margin-top: 20px; /* Space above the alphabet links */
+        }
+        .alphabet-links a {
+            text-decoration: none; /* Remove underline */
+            font-weight: bold; /* Bold font for better visibility */
+            color: black; /* Default link color */
+        }
+        .alphabet-links a:hover {
+            color: #0056b3; /* Darker color on hover */
+            text-decoration: underline; /* Optional: underline on hover */
+        }
+        .alphabet-links .btn-group {
+            margin-right: 10px;
+        }
+    </style>
+</head>
+<body>
+    <header class="text-black text-center py-3">
+        <h1>NMDB</h1>
+    </header>
+
+    <main class="container mt-4">
+        <!-- Search Form -->
+        <div class="d-flex justify-content-center mb-4">
+            <form method="GET" action="{{ url_for('index') }}" class="form-inline">
+                <input type="text" name="search" class="form-control mr-2" placeholder="Search for musicians..." value="{{ request.args.get('search', '') }}">
+                <button type="submit" class="btn btn-primary">Search</button>
+            </form>
+        </div>
+
+        <!-- Alphabet and Number Links -->
+        <div class="alphabet-links">
+            <a href="{{ url_for('index', letter='0-9', search=request.args.get('search', '')) }}" class="btn btn-link">0-9</a>
+            <div class="btn-group">
+                {% for letter in 'ABCDEFGHIJKLMNOPQRSTUVWXYZ' %}
+                    <a href="{{ url_for('index', letter=letter, search=request.args.get('search', '')) }}" class="btn btn-link">{{ letter }}</a>
+                {% endfor %}
+            </div>
+           
+        </div>
+
+        <div class="row">
+            {% if musicians %}
+                {% for musician in musicians %}
+                    <div class="col-md-2">
+                        <div class="musician-card">
+                            <a href="{{ url_for('artistprofile', id=musician['id'], artist_name=musician['encoded_name'].replace(' ', '-')) }}">
+                            {% if musician.cover_image %}
+                                <img src="{{ url_for('static', filename='images/' + musician.cover_image) }}" alt="{{ musician.name }}" class="img-fluid">
+                            {% else %}
+                                <div class="default-icon">
+                                    {% if musician.type == 'band' %}
+                                       👥
+                                    {% elif musician.type == 'artist' and musician.gender == 'male' %}
+                                        👨
+                                    {% elif musician.type == 'artist' and musician.gender == 'female' %}
+                                        👩
+                                    {% else %}
+                                        👤
+                                    {% endif %}
+                                </div>
+                            {% endif %}
+                            </a>
+                            <a href="{{ url_for('artistprofile', id=musician['id'], artist_name=musician['encoded_name'].replace(' ', '-')) }}">    
+                                {{ musician['name'] }}
+                            </a>
+                        </div>
+                    </div>
+                    {% if loop.index % 5 == 0 %}
+                        </div><div class="row">
+                    {% endif %}
+                {% endfor %}
+            {% else %}
+                <p class="text-center">No musicians found.</p>
+            {% endif %}
+        </div>
+
+        <!-- Pagination Controls -->
+        <nav aria-label="Page navigation">
+            <ul class="pagination justify-content-center mt-4">
+                {% if page > 1 %}
+                    <li class="page-item">
+                        <a class="page-link" href="{{ url_for('index', page=page-1, search=request.args.get('search', ''), letter=request.args.get('letter', '')) }}" aria-label="Previous">
+                            <span aria-hidden="true">&laquo;</span>
+                        </a>
+                    </li>
+                {% else %}
+                    <li class="page-item disabled">
+                        <a class="page-link" href="#" aria-label="Previous">
+                            <span aria-hidden="true">&laquo;</span>
+                        </a>
+                    </li>
+                {% endif %}
+                
+                {% for p in range(1, total_pages + 1) %}
+                    <li class="page-item {% if p == page %}active{% endif %}">
+                        <a class="page-link" href="{{ url_for('index', page=p, search=request.args.get('search', ''), letter=request.args.get('letter', '')) }}">{{ p }}</a>
+                    </li>
+                {% endfor %}
+                
+                {% if page < total_pages %}
+                    <li class="page-item">
+                        <a class="page-link" href="{{ url_for('index', page=page+1, search=request.args.get('search', ''), letter=request.args.get('letter', '')) }}" aria-label="Next">
+                            <span aria-hidden="true">&raquo;</span>
+                        </a>
+                    </li>
+                {% else %}
+                    <li class="page-item disabled">
+                        <a class="page-link" href="#" aria-label="Next">
+                            <span aria-hidden="true">&raquo;</span>
+                        </a>
+                    </li>
+                {% endif %}
+            </ul>
+        </nav>
+    </main>
+
+    <!-- Bootstrap JS and dependencies -->
+    <script src="https://code.jquery.com/jquery-3.5.1.slim.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@popperjs/core@2.11.6/dist/umd/popper.min.js"></script>
+    <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.min.js"></script>
+</body>
+</html>

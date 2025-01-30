@@ -1,0 +1,194 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/navbar.css') }}">
+    <title>Manage Genres</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap-icons/1.10.5/font/bootstrap-icons.min.css">
+    <style>
+        .alert-container {
+            position: fixed;
+            top: 1rem;
+            right: 1rem;
+            z-index: 1050;
+        }
+    </style>
+</head>
+<body>
+    <div id="header-placeholder"></div>
+
+    <!-- Flash messages container -->
+    <div id="flash-messages" class="alert-container"></div>
+
+    <script>
+        // JavaScript to include header
+        fetch('/header')
+            .then(response => response.text())
+            .then(data => {
+                document.getElementById('header-placeholder').innerHTML = data;
+            })
+            .catch(error => console.error('Error fetching header:', error));
+
+        function showFlashMessage(type, message) {
+            const flashMessages = document.getElementById('flash-messages');
+            const alert = document.createElement('div');
+            alert.className = `alert alert-${type} alert-dismissible fade show`;
+            alert.role = 'alert';
+            alert.innerHTML = `
+                ${message}
+                <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+            `;
+            flashMessages.appendChild(alert);
+            // Automatically remove the alert after 5 seconds
+            setTimeout(() => {
+                alert.classList.remove('show');
+                alert.classList.add('fade');
+                setTimeout(() => flashMessages.removeChild(alert), 150);
+            }, 5000);
+        }
+
+        function editGenre(genreId) {
+            const inputField = document.getElementById(`genre-${genreId}`);
+            const editBtn = document.getElementById(`edit-btn-${genreId}`);
+            const saveBtn = document.getElementById(`save-btn-${genreId}`);
+
+            if (inputField && editBtn && saveBtn) {
+                inputField.disabled = false;
+                editBtn.classList.add('d-none');
+                saveBtn.classList.remove('d-none');
+            } else {
+                console.error('Elements not found for genreId:', genreId);
+            }
+        }
+
+        function updateGenre(genreId) {
+            const genreName = document.getElementById(`genre-${genreId}`).value;
+
+            fetch('/update_genre', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/x-www-form-urlencoded'
+                },
+                body: `genre_id=${genreId}&genre_name=${encodeURIComponent(genreName)}`
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    showFlashMessage('success', 'Genre updated successfully!');
+                    const inputField = document.getElementById(`genre-${genreId}`);
+                    const editBtn = document.getElementById(`edit-btn-${genreId}`);
+                    const saveBtn = document.getElementById(`save-btn-${genreId}`);
+
+                    if (inputField && editBtn && saveBtn) {
+                        inputField.disabled = true;
+                        editBtn.classList.remove('d-none');
+                        saveBtn.classList.add('d-none');
+                    } else {
+                        console.error('Elements not found for genreId:', genreId);
+                    }
+                } else {
+                    showFlashMessage('danger', 'Error updating genre.');
+                }
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                showFlashMessage('danger', 'Error updating genre.');
+            });
+        }
+
+        function addGenre() {
+            const genreName = document.getElementById('new-genre').value;
+
+            if (!genreName.trim()) {
+                alert('Genre name cannot be empty.');
+                return;
+            }
+
+            fetch('/add_genre', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/x-www-form-urlencoded'
+                },
+                body: `genre=${encodeURIComponent(genreName)}`
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    alert('Genre added successfully!');
+                    const tableBody = document.getElementById('genres-table-body');
+                    if (!tableBody) {
+                        console.error('Error: #genres-table-body not found.');
+                        return;
+                    }
+
+                    const newRow = document.createElement('tr');
+                    newRow.innerHTML = `
+                        <td>
+                            <input type="text" class="form-control" value="${genreName}" id="genre-${data.genre_id}" disabled>
+                        </td>
+                        <td>
+                            <button class="btn btn-primary" id="edit-btn-${data.genre_id}" onclick="editGenre(${data.genre_id})">
+                                <i class="bi bi-pencil"></i>
+                            </button>
+                            <button class="btn btn-success d-none" id="save-btn-${data.genre_id}" onclick="updateGenre(${data.genre_id})">
+                                <i class="bi bi-save"></i>
+                            </button>
+                        </td>
+                    `;
+                    tableBody.appendChild(newRow);
+                    document.getElementById('new-genre').value = ''; // Clear input field
+                } else {
+                    alert('Error adding genre.');
+                }
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                alert('Error adding genre.');
+            });
+        }
+    </script>
+
+    <div class="container mt-5">
+
+        <!-- Form to add a new genre -->
+        <div class="mb-3">
+            <label for="new-genre" class="form-label">Add New Genre</label>
+            <div class="input-group">
+                <input type="text" class="form-control" id="new-genre" placeholder="Enter genre name">
+                <button class="btn btn-success" onclick="addGenre()">
+                    <i class="bi bi-plus-lg"></i> Add
+                </button>
+            </div>
+        </div>
+
+        <table class="table table-bordered">
+            <thead>
+                <tr>
+                    <th>Genre</th>
+                    <th>Action</th>
+                </tr>
+            </thead>
+            <tbody id="genres-table-body">
+                {% for genre in genres %}
+                <tr>
+                    <td>
+                        <input type="text" class="form-control" value="{{ genre[1] }}" id="genre-{{ genre[0] }}" disabled>
+                    </td>
+                    <td>
+                        <button class="btn btn-primary" id="edit-btn-{{ genre[0] }}" onclick="editGenre({{ genre[0] }})">
+                            <i class="bi bi-pencil"></i>
+                        </button>
+                        <button class="btn btn-success d-none" id="save-btn-{{ genre[0] }}" onclick="updateGenre({{ genre[0] }})">
+                            <i class="bi bi-save"></i>
+                        </button>
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+
+</body>
+</html>

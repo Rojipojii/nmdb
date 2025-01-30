@@ -1,0 +1,189 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/navbar.css') }}">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/artistprofile.css') }}">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+    <link href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css" rel="stylesheet">
+    <title>{{ profile_type|capitalize }} Profile</title>
+</head>
+<body>
+    <header class="text-black text-center py-3">
+        <a href="{{ url_for('index')}}" class="btn btn-link"><h1>NMDB</h1></a>
+    </header>
+
+    <main class="container mt-4">
+        <!-- Search Form -->
+        <div class="d-flex justify-content-center mb-4">
+            <form method="GET" action="{{ url_for('index') }}" class="form-inline">
+                <input type="text" name="search" class="form-control mr-2" placeholder="Search for musicians..." value="{{ request.args.get('search', '') }}">
+                <button type="submit" class="btn btn-primary">Search</button>
+            </form>
+        </div>
+
+        <br>
+        <div class="profile-name-genre">
+            <h3>{{ profile.musicians_english }}</h3>
+            {% if profile.genre %}
+            <p>{{ profile.genre }}</p>
+            {% endif %}
+        </div>
+
+        <!-- Artist/Band Profile Section -->
+        {% if profile.cover_image %}
+        <div class="profile-container">
+            
+            <div class="profile-image">
+                <img src="{{ url_for('static', filename='images/' + (profile.cover_image if profile.cover_image else 'default_cover.jpg')) }}" alt="Cover Image">
+            </div>
+            {% endif %}
+
+            <div class="profile-details">
+                {% if profile.birth_date %}
+                    {% if musician_type == 'artist' %}
+                        <p><strong>Born:</strong> {{ profile.birth_date.strftime('%-d %B %Y') }}</p>
+                    {% elif musician_type == 'band' %}
+                        <p><strong>Formed:</strong> {{ profile.birth_date.strftime('%-d %B %Y') }}</p>
+                    {% endif %}
+                {% endif %}
+
+                {% if profile.birthplace %}
+                    {% if musician_type == 'artist' %}
+                        <p><strong>Birth Place:</strong> {{ profile.birthplace}}</p>
+                    {% elif musician_type == 'band' %}
+                        <p><strong>Formed Place:</strong> {{ profile.birthplace }}</p>
+                    {% endif %}
+                {% endif %}
+
+                {% if profile.death_date %}
+                    {% if musician_type == 'artist' %}
+                        <p><strong>Deceased:</strong> {{ profile.death_date.strftime('%-d %B %Y') }}</p>
+                    {% elif musician_type == 'band' %}
+                        <p><strong>Disbanded:</strong> {{ profile.death_date.strftime('%-d %B %Y') }}</p>
+                    {% endif %}
+                {% endif %}
+            </div>
+        </div>
+
+<!-- Band Members Section -->
+{% if musician_type == 'band' %}
+<div class="band-members-container">
+    <h4>Band Members</h4>
+    <ul>
+        {% for member in band_members %}
+            <li>
+                <a href="{{ url_for('artistprofile', id=member.musician_id, artist_name=member.musician_name.replace(' ', '-')) }}">{{ member.musician_name }}</a>
+                {% if member.position %}
+                    {{ member.position }} 
+                {% endif %}
+                
+                {% if member.active %}
+                -  (Active)
+                
+                {% endif %}
+            </li>
+        {% endfor %}
+    </ul>
+</div>
+{% endif %}
+
+<!-- Featured Bands Section -->
+{% if musician_type == 'artist' and featured_bands %}
+<div class="featured-bands-container">
+    <h4>Featured in Bands</h4>
+    <ul>
+        {% for band in featured_bands %}
+            <li>
+                <a href="{{ url_for('artistprofile', id=band.band_id, artist_name=band.band_name.replace(' ', '-')) }}">{{ band.band_name }}</a>
+                <!-- Uncomment if you want to show additional info -->
+                <!-- {% if band.position %}
+                    {{ band.position }} in 
+                {% else %}
+                    in 
+                {% endif %}
+                
+                {% if band.active %}
+                    (Active)
+                {% endif %} -->
+            </li>
+        {% endfor %}
+    </ul>
+</div>
+{% endif %}
+
+
+        {% for album in discography %}
+        <div class="discography-container">
+            <!-- Displaying title based on compilation value -->
+            
+                {% if album.compilation == 1 %}
+                    <h4>Discography</h4><br>
+                {% elif album.compilation == 2 %}
+                    <h4>Featuring</h4><br>
+                {% endif %}
+                
+                <!-- Display album details -->
+                <div class="album-container">
+                    <div class="album">
+                        <h2>{{ album.collection_title }}</h2>
+                        <img src="{{ url_for('static', filename='uploads/' ~ album.image) }}" alt="{{ album.collection_title }}">
+                    </div>
+                </div>
+            {% endfor %}
+        </div>
+        
+
+        <!-- Awards Section -->
+        {% if profile.awards %}
+            <div class="awards-container">
+                <h4>Awards</h4><br>
+                <ul>
+                    {% for award in profile.awards.split('; ') %}
+                        <li>{{ award }}</li>
+                    {% endfor %}
+                </ul>
+            </div>
+        {% endif %}
+
+        {% if facebook %}
+        <!-- Social Media Section -->
+        <div class="social-media-container">
+            <h4>Follow on Social Media</h4>
+            <div class="social-media-icons">
+                
+                    <a href="{{ facebook }}" target="_blank"><i class="fab fa-facebook"></i></a>
+                {% endif %}
+                {% if twitter %}
+                    <a href="{{ twitter }}" target="_blank"><i class="fab fa-twitter"></i></a>
+                {% endif %}
+                {% if instagram %}
+                    <a href="{{ instagram }}" target="_blank"><i class="fab fa-instagram"></i></a>
+                {% endif %}
+                {% if youtube %}
+                    <a href="{{ youtube }}" target="_blank"><i class="fab fa-youtube"></i></a>
+                {% endif %}
+                {% if spotify %}
+                    <a href="{{ spotify }}" target="_blank"><i class="fab fa-spotify"></i></a>
+                {% endif %}
+                {% if apple_music %}
+                    <a href="{{ apple_music }}" target="_blank"><i class="fas fa-music"></i></a>
+                {% endif %}
+                {% if soundcloud %}
+                    <a href="{{ soundcloud }}" target="_blank"><i class="fab fa-soundcloud"></i></a>
+                {% endif %}
+            </div>
+        </div>
+
+        <!-- Player Embed Section -->
+        {% if player_embed %}
+            <div class="player-embed-container">
+                <div class="embed-responsive embed-responsive-16by9">
+                    {{ player_embed|safe }}
+                </div>
+            </div>
+        {% endif %}
+    </main>
+</body>
+</html>

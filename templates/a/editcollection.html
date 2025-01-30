@@ -1,0 +1,441 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Edit Collection</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/css/bootstrap.min.css" rel="stylesheet">
+    <style>
+        .combobox {
+            position: relative;
+        }
+
+        .combobox-dropdown {
+            display: none;
+            position: absolute;
+            top: 100%;
+            left: 0;
+            right: 0;
+            max-height: 200px;
+            overflow-y: auto;
+            border: 1px solid #ccc;
+            background-color: #fff;
+            z-index: 1000;
+            box-shadow: 0px 4px 8px rgba(0, 0, 0, 0.2);
+            border-radius: 4px;
+            margin-top: 4px;
+        }
+
+        .combobox-option {
+            padding: 8px;
+            cursor: pointer;
+        }
+
+        .combobox-option:hover {
+            background-color: #f1f1f1;
+        }
+
+        .pill-group {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 4px;
+        }
+
+        .pill {
+            display: inline-flex;
+            align-items: center;
+            padding: 4px 8px;
+            background-color: #007bff;
+            color: white;
+            border-radius: 16px;
+            font-size: 14px;
+        }
+
+        .remove-button {
+            background: none;
+            border: none;
+            color: white;
+            font-size: 14px;
+            margin-left: 4px;
+            cursor: pointer;
+        }
+
+        .remove-button:hover {
+            opacity: 0.7;
+        }
+
+        .combobox-input {
+            width: 100%;
+        }
+
+        .combobox-options {
+            list-style-type: none;
+            padding: 0;
+            margin: 0;
+        }
+        .selected-option {
+            background-color: #f9e79f !important;
+            color: black !important;
+        }
+        
+    </style>
+</head>
+
+<body>
+    <div class="container mt-5">
+        <div id="header-placeholder"></div>
+        <script>
+            fetch('/header')
+                .then(response => response.text())
+                .then(data => {
+                    document.getElementById('header-placeholder').innerHTML = data;
+                })
+                .catch(error => console.error('Error fetching header:', error));
+        </script>
+        <br>
+        <h3>Edit Collection</h3>
+        <form method="POST">
+            <input type="hidden" id="collection-id" value="{{ collection.id }}">
+            <div class="row">
+                <!-- FileName Field (Display only) -->
+                <div class="col-md-6 mb-3">
+                    <label for="tagname" class="form-label">FileName</label>
+                    <!-- Displaying FileName -->
+                    <p id="tagname" class="form-control-static">{{ collection.tagname }}</p>
+                </div>
+
+                <!-- Title Field -->
+                 
+                <div class="col-md-6 mb-3">
+                    <label for="title" class="form-label">Title</label>
+                    <!-- Displaying FileName -->
+                    <p id="title" class="form-control-static">{{ collection.title }}</p>
+                </div>
+            </div>
+
+            <div class="row">
+                <!-- Genre Multi-Select -->
+<div class="col-md-4">
+    <div class="combobox">
+        <label for="genre-input" class="form-label">Genre</label>
+        <div class="pills-input d-flex align-items-center" onclick="toggleDropdown('genre')">
+            <div class="pill-group" id="genre-pill-group">
+                {% for genre in selected_genres %}
+                <span class="pill">{{ genre }}
+                    <button class="remove-button" onclick="removePill(event, 'genre')">x</button>
+                </span>
+                {% endfor %}
+            </div>
+            <input type="text" id="genre-input" name="genres" class="form-control me-2 combobox-input" placeholder="Select genres" oninput="handleInput('genre')" />
+            
+        </div>
+        <input type="hidden" id="selected-genres" name="selected_genres">
+
+        <div class="combobox-dropdown" id="genre-dropdown">
+            <ul class="combobox-options list-group" id="genre-options">
+                {% for genre in genres %}
+                <li class="combobox-option" data-id="{{ genre.id }}" onclick="addPill(event, 'genre')">
+                    {{ genre.name }}
+                </li>
+                {% endfor %}
+            </ul>
+        </div>
+    </div>
+</div>
+
+
+                <!-- Language Multi-Select -->
+                <div class="col-md-4">
+                    <div class="combobox">
+                        <label for="language-input" class="form-label">Language</label>
+                        <div class="pills-input d-flex align-items-center" onclick="toggleDropdown('language')">
+                            <div class="pill-group" id="language-pill-group">
+                                {% for language in selected_languages %}
+                                <span class="pill">{{ language }}<button class="remove-button" onclick="removePill(event, 'language')">x</button></span>
+                                {% endfor %}
+                            </div>
+                            <input type="text" id="language-input" name="languages" class="form-control me-2 combobox-input" placeholder="Select languages" oninput="handleInput('language')" />
+                        </div>
+                        <input type="hidden" id="selected-languages" name="selected_languages">
+                        <div class="combobox-dropdown" id="language-dropdown">
+                            <ul class="combobox-options list-group" id="language-options">
+                                {% for language in languages %}
+                                <li class="combobox-option" data-id="{{ language.id }}">{{ language.name }}</li>
+                                {% endfor %}
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Artist Multi-Select -->
+                <div class="col-md-4">
+                    <div class="combobox">
+                        <label for="artist-input" class="form-label">Artist</label>
+                        <div class="pills-input d-flex align-items-center" onclick="toggleDropdown('artist')">
+                            <div class="pill-group" id="artist-pill-group">
+                                {% for artist in selected_artists %}
+                                <span class="pill">{{ artist }}<button class="remove-button" onclick="removePill(event, 'artist')">x</button></span>
+                                {% endfor %}
+                            </div>
+                            <input type="text" id="artist-input"  name="artists" class="form-control me-2 combobox-input" placeholder="Select artists" oninput="handleInput('artist')" />
+                        </div>
+                        <input type="hidden" id="selected-artists" name="selected_artists">
+                        <div class="combobox-dropdown" id="artist-dropdown">
+                            <ul class="combobox-options list-group" id="artist-options">
+                                {% for artist in artists %}
+                                <li class="combobox-option" data-id="{{ artist.musician_id }}">{{ artist.musicians_english }}</li>
+                                {% endfor %}
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+          
+            <br><br>
+
+            <button type="submit" class="btn btn-primary">Update</button>
+        </form>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+        const apiUrls = {
+            genre: '/getgenres',
+            language: '/getlanguages',
+            artist: '/musicians',
+        };
+    
+        const state = {
+            genre: { data: [], selectedValues: [] },
+            language: { data: [], selectedValues: [] },
+            artist: { data: [], selectedValues: [] },
+        };
+    
+        // Initialize selected values with those fetched from the server
+        document.addEventListener('DOMContentLoaded', () => {
+            const initialGenres = {{ selected_genres | tojson | safe }} || [];
+            console.log("Initial Genres:", initialGenres);  // Debugging
+            const initialLanguages = {{ selected_languages | tojson | safe }} || [];
+            console.log("Initial Languages:", initialLanguages);  // Debugging
+            const initialArtists = {{ selected_artists | tojson | safe }} || [];
+            console.log("Initial Artists:", initialArtists); 
+
+            state.genre.selectedValues = initialGenres;
+            state.language.selectedValues = initialLanguages;
+            state.artist.selectedValues = initialArtists;
+    
+            // Fetch available options
+            ['genre', 'language', 'artist'].forEach(fetchOptions);
+    
+            // Initialize pills for selected values
+            updatePills('genre');
+            updatePills('language');
+            updatePills('artist');
+        });
+    
+        function fetchOptions(field) {
+            fetch(apiUrls[field])
+                .then(response => response.json())
+                .then(options => {
+                    console.log(`${field} options received:`, options);
+                    state[field].data = options;
+                    updateOptions(field);
+                })
+                .catch(error => console.error(`Error fetching ${field}:`, error));
+        }
+    
+        function toggleDropdown(field) {
+            const dropdown = document.getElementById(`${field}-dropdown`);
+            const isDropdownOpen = dropdown.style.display === 'block';
+            dropdown.style.display = isDropdownOpen ? 'none' : 'block';
+    
+            if (!isDropdownOpen) {
+                updateOptions(field);
+            }
+        }
+    
+        function handleInput(field) {
+            updateOptions(field);
+        }
+    
+        // Handle fetching and updating options
+        function updateOptions(field) {
+            const searchInput = document.getElementById(`${field}-input`);
+            const optionsContainer = document.getElementById(`${field}-options`);
+            const searchValue = searchInput.value.toLowerCase();
+            
+            const filteredOptions = state[field].data.filter(option => {
+                return option.name.toLowerCase().includes(searchValue); // Use `name` for filtering
+            });
+            
+            optionsContainer.innerHTML = '';
+            
+            // Display filtered options
+            filteredOptions.forEach(option => {
+                const li = document.createElement('li');
+                li.className = 'combobox-option';
+                li.textContent = option.name; // Display the name
+                li.setAttribute('data-id', option.id);
+        
+                // Apply yellow highlight if the option is already selected
+                if (state[field].selectedValues.some(val => val.id === option.id)) {
+                    li.classList.add('selected-option');
+                }
+                
+                li.onclick = () => handleOptionSelect(field, option); // Pass the entire option object
+                optionsContainer.appendChild(li);
+            });
+        
+            // If no options are found, show the "Create" option
+            if (filteredOptions.length === 0 && searchValue.length > 0) {
+                const li = document.createElement('li');
+                li.className = 'combobox-option';
+                li.textContent = `+ Create ${searchInput.value}`;
+                li.onclick = () => createOption(field, searchInput.value);
+                optionsContainer.appendChild(li);
+            }
+        }
+        
+        function createOption(field, value) {
+            const formData = new FormData();
+            formData.append('genre', value);  // Appending the genre name to the FormData
+            formData.append('language', value);  // Appending the genre name to the FormData
+
+            let apiEndpoint;
+            if (field === 'genre') {
+                apiEndpoint = '/add_genre';
+            } else if (field === 'language') {
+                apiEndpoint = '/add_language';
+            }
+        
+            fetch(apiEndpoint, {
+                method: 'POST',
+                body: formData,  // Send form data instead of JSON
+            })
+            .then(response => response.json())
+            .then(responseData => {
+                if (responseData.success) {
+                    state[field].data.push(responseData.newOption);
+                    state[field].selectedValues.push({ id: responseData.newOption.id, name: responseData.newOption.name });
+                    updatePills(field);
+                    updateOptions(field);
+                } else {
+                    alert('Failed to add new option: ' + responseData.message);
+                }
+            })
+            .catch(error => {
+                console.error('Error adding new option:', error);
+                alert('An error occurred while adding the new option.');
+            });
+        }
+        
+        
+        // Handle option selection
+        function handleOptionSelect(field, option) {
+    const existingIndex = state[field].selectedValues.findIndex(val => val.id === option.id);
+
+    if (existingIndex !== -1) {
+        // If the option is already selected, remove it
+        state[field].selectedValues.splice(existingIndex, 1);
+    } else {
+        // If not selected, add it
+        state[field].selectedValues.push({ id: option.id, name: option.name });
+    }
+
+    updatePills(field);
+    updateOptions(field); // Ensure dropdown updates after selection toggle
+}
+
+        // Update the pills (displaying selected genres, languages, artists)
+        function updatePills(field) {
+            const pillGroup = document.getElementById(`${field}-pill-group`);
+            pillGroup.innerHTML = '';
+            
+            state[field].selectedValues.forEach(value => {
+                if (!value) return;  // Prevents undefined issues
+                
+                // Ensure the value has a `name` property
+                const displayValue = value.name || value;  // If `value.name` exists, use it; otherwise, use the whole value
+                
+                const pill = document.createElement('span');
+                pill.className = 'pill selected-option';
+                pill.innerHTML = `${displayValue} <button class="remove-button" onclick="removePill(event, '${field}')">x</button>`;
+                pillGroup.appendChild(pill);
+            });
+        
+            // Update the hidden input with the selected values in JSON format
+            document.getElementById(`selected-${field}s`).value = JSON.stringify(state[field].selectedValues);
+        }
+        
+        
+        
+        function removePill(event, field) {
+            event.stopPropagation(); // Prevent the dropdown toggle from being triggered
+            const pill = event.target.closest('.pill');  // Find the pill element to remove
+            const pillText = pill.textContent.replace(' x', '');  // Get the pill's text content
+        
+            state[field].selectedValues = state[field].selectedValues.filter(val => {
+                const valueToCompare = val.name ? val.name : val;  // Compare using the value's name or value itself
+                return valueToCompare !== pillText;
+            });
+        
+        
+            // Update the pills display
+            updatePills(field);
+        }
+        
+        
+    
+     // Handle form submission for editing a collection
+const form = document.querySelector('form');
+if (form) {
+    form.addEventListener('submit', (event) => {
+        event.preventDefault(); // Prevent default form submission
+
+        const collectionId = document.getElementById('collection-id').value;
+
+        // Ensure hidden input fields are updated with the selected ids (raw values)
+        const genres = state.genre.selectedValues ? state.genre.selectedValues.map(option => option.id) : [];
+        const languages = state.language.selectedValues ? state.language.selectedValues.map(option => option.id) : [];
+        const artists = state.artist.selectedValues ? state.artist.selectedValues.map(option => option.id) : [];
+
+        console.log("State Genre Selected Values:", state.genre.selectedValues);
+        console.log("State Language Selected Values:", state.language.selectedValues);
+        console.log("State Artist Selected Values:", state.artist.selectedValues);
+
+        // Log the selected ids
+        console.log("Selected Genres (IDs):", genres);
+        console.log("Selected Languages (IDs):", languages);
+        console.log("Selected Artists (IDs):", artists);
+
+        // Update hidden input fields with the raw values (not JSON string)
+        document.getElementById('selected-genres').value = genres.join(',');  // Join as comma-separated string
+        document.getElementById('selected-languages').value = languages.join(',');  // Join as comma-separated string
+        document.getElementById('selected-artists').value = artists.join(',');  // Join as comma-separated string
+
+        // Prepare formData to send to the backend
+        const formData = new FormData(form);
+
+        fetch(`/edit_collection/${collectionId}`, {
+            method: 'POST',
+            body: formData,
+        })
+        .then(response => response.text())
+        .then(data => {
+            alert('Collection updated successfully!');
+            window.location.reload();
+        })
+        .catch(error => console.error("Fetch error:", error));
+    });
+}
+
+
+      
+// Initialize fetching options for all fields as done in the add collection
+['genre', 'language', 'artist'].forEach(fetchOptions);
+
+        
+    </script>
+</body>
+</html>

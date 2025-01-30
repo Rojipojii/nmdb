@@ -1,0 +1,146 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/navbar.css') }}">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/addaward.css') }}">
+    <title>Add Music Awards</title>
+
+</head>
+<body>
+    <div id="header-placeholder"></div>
+    <script>
+        // JavaScript to include header
+        document.addEventListener('DOMContentLoaded', () => {
+            fetch('/header')
+                .then(response => response.text())
+                .then(data => {
+                    document.getElementById('header-placeholder').innerHTML = data;
+                })
+                .catch(error => console.error('Error fetching header:', error));
+        });
+    </script>
+
+    <br><br><br><br>
+    <h3>Add Music Awards</h3>
+
+    <!-- Container for multiple categories -->
+    <div id="form-container">
+        <div class="category-container" id="category1">
+            <h4>Category 1</h4>
+            <form method="POST" action="/addaward" class="addaward-form">
+                <label for="year">Year:</label>
+                <input type="text" id="year" name="year"><br><br>
+                <label for="organizer">Organizer:</label>
+                <input type="text" id="organizer" name="organizer"><br><br>
+                <label for="awardtitle">Award Title:</label>
+                <input type="text" id="awardtitle" name="awardtitle"><br><br>
+
+                <!-- Award icon -->
+                <label for="imageUpload">Award icon:</label>
+                <input type="file" id="imageUpload" name="image" accept="image/*"><br><br>
+
+                <!-- Category and nominations -->
+                <div id="nominations-container">
+                    <div class="nominations-group">
+                        <label for="artistBand">Nominations:</label>
+                        <input type="text" name="artistBand[]" placeholder="Artist/Band">
+                        <input type="text" name="albumSong[]" placeholder="Album/Song">
+                        <div class="checkbox-container">
+                            <input type="checkbox" name="winner[]" value="1">
+                            <label for="winner">Winner</label>
+                        </div>
+                        <br>
+                    </div>
+                </div>
+
+                <div class="add-button-container">
+                    <button type="button" class="award-button" onclick="addEntry('category1')">Add Nominees</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <div class="add-button-container">
+        <button type="button" class="award-button" onclick="addCategory()">Add More Categories</button>
+    </div><br><br>
+
+    <div class="add-button-container">
+        <button type="submit" class="award-button">Submit</button>
+    </div>
+
+    <script>
+        function addEntry(categoryId) {
+            // Get the container for nominations within the specific category
+            const container = document.getElementById(categoryId).querySelector('#nominations-container');
+
+            // Create a new div element for the new set of fields
+            const newEntry = document.createElement('div');
+            newEntry.classList.add('nominations-group');
+            newEntry.innerHTML = `
+                <label for="artistBand">Nominations:</label>
+                <input type="text" name="artistBand[]" placeholder="Artist/Band">
+                <input type="text" name="albumSong[]" placeholder="Album/Song">
+                <div class="checkbox-container">
+                    <input type="checkbox" name="winner[]" value="1">
+                    <label for="winner">Winner</label>
+                </div>
+                <br>
+            `;
+
+            // Append the new entry to the container
+            container.appendChild(newEntry);
+        }
+
+        function addCategory() {
+            // Get the form container
+            const container = document.getElementById('form-container');
+
+            // Find the number of existing categories
+            const categories = container.getElementsByClassName('category-container');
+            const newCategoryNumber = categories.length + 1;
+
+            // Create a new div element for the new category
+            const newCategory = document.createElement('div');
+            newCategory.classList.add('category-container');
+            newCategory.id = `category${newCategoryNumber}`;
+            newCategory.innerHTML = `
+                <h4>Category ${newCategoryNumber}</h4>
+                <form method="POST" action="/addaward" class="addaward-form">
+                    <label for="year">Year:</label>
+                    <input type="text" id="year" name="year"><br><br>
+                    <label for="organizer">Organizer:</label>
+                    <input type="text" id="organizer" name="organizer"><br><br>
+                    <label for="awardtitle">Award Title:</label>
+                    <input type="text" id="awardtitle" name="awardtitle"><br><br>
+
+                    <!-- Award icon -->
+                    <label for="imageUpload">Award icon:</label>
+                    <input type="file" id="imageUpload" name="image" accept="image/*"><br><br>
+
+                    <!-- Category and nominations -->
+                    <div id="nominations-container">
+                        <div class="nominations-group">
+                            <label for="artistBand">Nominations:</label>
+                            <input type="text" name="artistBand[]" placeholder="Artist/Band">
+                            <input type="text" name="albumSong[]" placeholder="Album/Song">
+                            <div class="checkbox-container">
+                                <input type="checkbox" name="winner[]" value="1">
+                                <label for="winner">Winner</label>
+                            </div>
+                            <br>
+                        </div>
+                    </div>
+
+                    <div class="add-button-container">
+                        <button type="button" class="award-button" onclick="addEntry('category${newCategoryNumber}')">Add Nominees</button>
+                    </div>
+                </form>
+            `;
+
+            // Append the new category to the container
+            container.appendChild(newCategory);
+        }
+    </script>
+</body>
+</html>

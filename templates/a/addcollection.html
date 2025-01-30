@@ -1,0 +1,306 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Add Collection</title>
+    <!-- Bootstrap CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/css/bootstrap.min.css" rel="stylesheet">
+    
+    <style>
+        /* Shared styles for the multi-select components */
+        .combobox {
+            position: relative;
+            width: 300px;
+            margin-bottom: 20px;
+        }
+
+        .pills-input {
+            display: flex;
+            flex-wrap: wrap;
+            border: 1px solid #ccc;
+            padding: 5px;
+            border-radius: 5px;
+            cursor: pointer;
+        }
+
+        .pill-group {
+            display: flex;
+            align-items: center;
+            flex-wrap: wrap;
+        }
+
+        .pill {
+            background-color: #e0e0e0;
+            padding: 5px 10px;
+            margin: 2px;
+            border-radius: 15px;
+            display: flex;
+            align-items: center;
+        }
+
+        .remove-button {
+            background: none;
+            border: none;
+            cursor: pointer;
+            margin-left: 5px;
+        }
+
+        .combobox-dropdown {
+            position: absolute;
+            top: 100%;
+            left: 0;
+            right: 0;
+            border: 1px solid #ccc;
+            background-color: white;
+            max-height: 150px;
+            overflow-y: auto;
+            display: none;
+            z-index: 10;
+        }
+
+        .combobox-options {
+            list-style: none;
+            padding: 0;
+            margin: 0;
+        }
+
+        .combobox-option {
+            padding: 10px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+        }
+
+        .combobox-option:hover {
+            background-color: #f0f0f0;
+        }
+
+        .check-icon {
+            margin-right: 5px;
+            font-size: 12px;
+        }
+
+        .combobox-empty {
+            padding: 10px;
+            color: #888;
+        }
+    </style>
+</head>
+<body>
+    <div id="header-placeholder"></div>
+    <script>
+      fetch('/header')
+        .then(response => response.text())
+        .then(data => {
+          document.getElementById('header-placeholder').innerHTML = data;
+        })
+        .catch(error => console.error('Error fetching header:', error));
+    </script>
+    <br><br>
+
+    <div class="container mt-5">
+        <form id="multi-select-form" action="/submit-data" method="post">
+            <div class="row mb-4">
+                <!-- Filename Field -->
+                <div class="col-md-6">
+                    <div class="form-group">
+                        <label for="tagname" class="form-label">Filename</label>
+                        <input type="text" id="tagname" name="tagname" class="form-control" placeholder="Enter filename" required>
+                    </div>
+                </div>
+            
+                <!-- Title Field -->
+                <div class="col-md-6">
+                    <div class="form-group">
+                        <label for="title" class="form-label">Title</label>
+                        <input type="text" id="title" name="title" class="form-control" placeholder="Enter title" required>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="row mb-4">
+                <!-- Genre Multi-Select -->
+                <div class="col-md-4">
+                    <div class="combobox">
+                        <label for="genre-input" class="form-label">Genre</label>
+                        <div class="pills-input d-flex align-items-center" onclick="toggleDropdown('genre')">
+                            <div class="pill-group" id="genre-pill-group"></div>
+                            <input type="text" id="genre-input" class="form-control me-2" placeholder="Select genres" oninput="handleInput('genre')" />
+                        </div>
+                        <div class="combobox-dropdown" id="genre-dropdown">
+                            <ul class="combobox-options list-group" id="genre-options"></ul>
+                        </div>
+                    </div>
+                </div>
+            
+                <!-- Language Multi-Select -->
+                <div class="col-md-4">
+                    <div class="combobox">
+                        <label for="language-input" class="form-label">Language</label>
+                        <div class="pills-input d-flex align-items-center" onclick="toggleDropdown('language')">
+                            <div class="pill-group" id="language-pill-group"></div>
+                            <input type="text" id="language-input" class="form-control me-2" placeholder="Select languages" oninput="handleInput('language')" />
+                        </div>
+                        <div class="combobox-dropdown" id="language-dropdown">
+                            <ul class="combobox-options list-group" id="language-options"></ul>
+                        </div>
+                    </div>
+                </div>
+            
+                <!-- Artist Multi-Select -->
+                <div class="col-md-4">
+                    <div class="combobox">
+                        <label for="artist-input" class="form-label">Artist</label>
+                        <div class="pills-input d-flex align-items-center" onclick="toggleDropdown('artist')">
+                            <div class="pill-group" id="artist-pill-group"></div>
+                            <input type="text" id="artist-input" class="form-control me-2" placeholder="Select artists" oninput="handleInput('artist')" />
+                        </div>
+                        <div class="combobox-dropdown" id="artist-dropdown">
+                            <ul class="combobox-options list-group" id="artist-options"></ul>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            
+        
+            <!-- Submit Button -->
+            <button type="submit" class="btn btn-primary w-100">Submit</button>
+        </form>
+    </div>
+
+    <!-- Bootstrap JS (Optional) -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/js/bootstrap.bundle.min.js"></script>
+ <script> 
+    const apiUrls = {
+        genre: '/genres',
+        language: '/languages',
+        artist: '/musicians', // API endpoint for fetching artists
+    };
+    
+    const state = {
+        genre: { data: [], selectedValues: [] },
+        language: { data: [], selectedValues: [] },
+        artist: { data: [], selectedValues: [] }, // Added artist state
+    };
+    
+    // Fetch options for genres, languages, and artists
+    function fetchOptions(field) {
+        fetch(apiUrls[field])
+            .then(response => response.json())
+            .then(options => {
+                state[field].data = options;
+                updateOptions(field);
+            })
+            .catch(error => console.error(`Error fetching ${field}:`, error));
+    }
+    
+    // Toggle dropdown visibility
+    function toggleDropdown(field) {
+        const dropdown = document.getElementById(`${field}-dropdown`);
+        dropdown.style.display = dropdown.style.display === 'block' ? 'none' : 'block';
+        updateOptions(field);
+    }
+    
+    // Handle input changes in the search bar
+    function handleInput(field) {
+        updateOptions(field);
+    }
+    
+    // Update the dropdown options based on input
+    function updateOptions(field) {
+        const searchInput = document.getElementById(`${field}-input`);
+        const optionsContainer = document.getElementById(`${field}-options`);
+        const searchValue = searchInput.value.toLowerCase();
+    
+        const filteredOptions = state[field].data.filter(option => {
+            const optionText = typeof option === 'string' ? option : option.name;
+            return optionText.toLowerCase().includes(searchValue);
+        });
+    
+        optionsContainer.innerHTML = '';
+        filteredOptions.forEach(option => {
+            const li = document.createElement('li');
+            li.className = 'combobox-option';
+            const optionText = typeof option === 'string' ? option : option.name;
+            li.textContent = optionText;
+    
+            if (state[field].selectedValues.includes(optionText)) {
+                li.prepend('✔ ');
+            }
+    
+            li.onclick = () => handleOptionSelect(field, optionText);
+            optionsContainer.appendChild(li);
+        });    
+    }
+    
+    // Handle selection of an option
+    function handleOptionSelect(field, option) {
+        if (state[field].selectedValues.includes(option)) {
+            state[field].selectedValues = state[field].selectedValues.filter(item => item !== option);
+        } else {
+            state[field].selectedValues.push(option);
+        }
+        updatePills(field);
+    }
+    
+    
+    // Update selected options as pills
+    function updatePills(field) {
+        const pillGroup = document.getElementById(`${field}-pill-group`);
+        pillGroup.innerHTML = '';
+    
+        state[field].selectedValues.forEach(option => {
+            const pill = document.createElement('span');
+            pill.className = 'pill';
+            pill.textContent = option;
+    
+            const removeButton = document.createElement('button');
+            removeButton.className = 'remove-button';
+            removeButton.textContent = 'x';
+            removeButton.onclick = () => handleOptionSelect(field, option);
+            pill.appendChild(removeButton);
+    
+            pillGroup.appendChild(pill);
+        });
+    }
+    
+     // Handle form submission
+     document.getElementById('multi-select-form').addEventListener('submit', (event) => {
+        event.preventDefault();
+
+        const formData = {
+            tagname: document.getElementById('tagname').value,
+            title: document.getElementById('title').value,
+            genre: state.genre.selectedValues,
+            language: state.language.selectedValues,
+            artist: state.artist.selectedValues,
+        };
+
+        // Send form data to backend
+        fetch('/submit-form', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(formData),
+        })
+        .then(response => response.text())
+        .then(data => {
+
+            alert('Form submitted successfully!');
+            console.log(data);
+            // Reload the current page after form submission
+            window.location.reload();
+        })
+        .catch(error => {
+
+            console.error(error);
+        });
+    });
+
+    // Initialize fetching options for all fields
+    ['genre', 'language', 'artist'].forEach(fetchOptions);
+</script>
+</body>    
+    
+</html>
